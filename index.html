@@ -85,15 +85,15 @@
     <div id="scanner-container">
         <h3>Наведите камеру на штрих-код</h3>
         <div id="reader"></div>
-        <button class="btn file-btn" onclick="document.getElementById('file-input').click()">📁 Загрузить фото с наклейкой</button>
+        <button class="btn file-btn" onclick="document.getElementById('file-input').click()">Загрузить фото 📁</button>
         <input type="file" id="file-input" accept="image/*" onchange="handleFile(event)">
     </div>
     
     <div id="success-container">
         <h3>✅ Найденные штрих-коды:</h3>
         <div class="code-list" id="result-list"></div>
-        <button class="btn copy-btn" onclick="copyAllCodes()">✓ Скопировать всё</button>
-        <button class="btn retry-btn" onclick="resetScanner()">❌ Сканировать снова</button>
+        <button class="btn copy-btn" onclick="copyAllCodes()">Скопировать всё ✓</button>
+        <button class="btn retry-btn" onclick="resetScanner()">Сканировать снова ❌</button>
     </div>
 
     <script>
@@ -140,10 +140,8 @@
             }
         }
 
-        // Запуск камеры один раз при старте
         startCamera();
 
-        // Обработка загруженного файла (ищет сразу ВСЕ штрих-коды)
         async function handleFile(e) {
             if (e.target.files && e.target.files.length > 0) {
                 const file = e.target.files[0];
@@ -171,7 +169,7 @@
                         const imageUrl = canvas.toDataURL('image/jpeg', 0.95);
 
                         try {
-                            const results = await zxingReader.dup ? null : await zxingReader.decodeFromImageUrl(imageUrl);
+                            const results = await zxingReader.decodeFromImageUrl(imageUrl);
                             if (results) {
                                 const items = Array.isArray(results) ? results : [results];
                                 foundCodes = [];
@@ -225,12 +223,18 @@
 
         function copyAllCodes() {
             const combinedText = foundCodes.join('\n');
+            
+            // Сначала пробуем скопировать в буфер обмена
+            navigator.clipboard.writeText(combinedText).catch(() => {});
+
+            // Если открыто внутри Telegram, отправляем данные боту и закрываем WebApp
             if (tg.sendData) {
                 tg.sendData(combinedText);
-            } else {
-                navigator.clipboard.writeText(combinedText);
             }
-            tg.close();
+            
+            setTimeout(() => {
+                tg.close();
+            }, 100);
         }
     </script>
 </body>
