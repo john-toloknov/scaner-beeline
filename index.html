@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сканер штрих-кодов</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body { 
+            font-family: sans-serif; 
+            margin: 0; 
+            padding: 10px; 
+            background: #17212b; 
+            color: white; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 95vh;
+        }
+        h3 {
+            margin: 8px 0;
+            font-size: 16px;
+            text-align: center;
+        }
+        #scanner-container {
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #reader { 
+            width: 100%; 
+            max-width: 400px; 
+            border-radius: 12px; 
+            overflow: hidden; 
+        }
+        #success-container {
+            display: none;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .code-text {
+            font-family: monospace;
+            font-size: 24px;
+            color: #52cbff;
+            margin: 15px 0 20px 0;
+            word-break: break-all;
+            background: #2b5278;
+            padding: 12px;
+            border-radius: 10px;
+        }
+        .btn {
+            border: none;
+            padding: 14px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .copy-btn {
+            background-color: #27ae60;
+            color: white;
+        }
+        .file-btn {
+            background-color: #2980b9;
+            color: white;
+        }
+        .retry-btn {
+            background-color: #c0392b;
+            color: white;
+        }
+        #file-input {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="scanner-container">
+        <h3 id="instruction">Наведите камеру на штрих-код</h3>
+        <div id="reader"></div>
+        
+        <button class="btn file-btn" onclick="document.getElementById('file-input').click()">📁 Загрузить фото с наклейкой</button>
+        <input type="file" id="file-input" accept="image/*" onchange="handleFileUpload(event)">
+    </div>
+    
+    <div id="success-container">
+        <h3>✅ Штрих-код считан:</h3>
+        <div class="code-text" id="scanned-code-view"></div>
+        <button class="btn copy-btn" onclick="copyCode()">✓ Копировать</button>
+        <button class="btn retry-btn" onclick="retryScan()">❌ Повторное сканирование</button>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+
+        let capturedText = "";
+        let html5QrCode;
+
+        function onScanSuccess(decodedText) {
+            capturedText = decodedText;
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.notificationOccurred('success');
+            }
+            stopScannerAndShowResult(decodedText);
+        }
+
+        function stopScannerAndShowResult(text) {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => {
+                    showSuccess(text);
+                }).catch(() => {
+                    showSuccess(text);
+                });
+            } else {
+                showSuccess(text);
+            }
+        }
+
+        function showSuccess(text) {
+            document.getElementById('scanner-container').style.display = 'none';
+            document.getElementById('scanned-code-view').innerText = text;
+            document.getElementById('success-container').style.display = 'block';
+        }
+
+        // Надежный метод обработки выбранного изображения через отдельный экземпляр
+        function handleFileUpload(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+            const file = files[0];
+
+            // Останавливаем живую камеру на время обработки фото
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().catch(() => {});
+            }
+
+            const readerInstance = new Html5Qrcode("reader");
+            readerInstance.scanFile(file, true)
+                .then(decodedText => {
+                    if (tg.HapticFeedback) {
+                        tg.HapticFeedback.notificationOccurred('success');
+                    }
+                    stopScannerAndShowResult(decodedText);
+                })
+                .catch(err => {
+                    alert("Штрих-код не найден на фото. Попробуйте сделать снимок ближе к наклейке.");
+                    startScanner(); // возвращаем камеру
+                });
+        }
+
+        function copyCode() {
+            if (tg.sendData) {
+                tg.sendData(capturedText);
+            }
+            navigator.clipboard.writeText(capturedText).then(() => {
+                tg.close();
+            }).catch(() => {
+                tg.close();
+            });
+        }
+
+        function retryScan() {
+            document.getElementById('success-container').style.display = 'none';
+            document.getElementById('scanner-container').style.display = 'flex';
+            startScanner();
+        }
+
+        function startScanner() {
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("reader");
+            }
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { 
+                    fps: 20, 
+                    qrbox: { width: 280, height: 130 }
+                },
+                onScanSuccess
+            ).catch(err => {
+                console.log("Ошибка запуска камеры");
+            });
+        }
+
+        startScanner();
+    </script>
+</body>
+</html>
