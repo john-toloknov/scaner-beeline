@@ -5,119 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Сканер штрих-кодов</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js"></script>
-    <style>
-        body { 
-            font-family: sans-serif; 
-            margin: 0; 
-            padding: 10px; 
-            background: #17212b; 
-            color: white; 
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            min-height: 95vh;
-        }
-        #scanner-container {
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        #video { 
-            width: 100%; 
-            max-width: 400px; 
-            border-radius: 12px; 
-            background: black;
-            height: 300px;
-            object-fit: cover;
-        }
-        #success-container {
-            display: none;
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
-        .code-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin: 15px 0 20px 0;
-            max-height: 250px;
-            overflow-y: auto;
-        }
-        .code-item {
-            font-family: monospace;
-            font-size: 18px;
-            color: #52cbff;
-            background: #2b5278;
-            padding: 10px;
-            border-radius: 8px;
-            word-break: break-all;
-            text-align: left;
-        }
-        .code-item span {
-            font-size: 12px;
-            color: #b0c4de;
-            display: block;
-            margin-bottom: 3px;
-        }
-        .btn {
-            border: none;
-            padding: 14px;
-            font-size: 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            width: 100%;
-            font-weight: bold;
-            margin-top: 10px;
-        }
-        .copy-btn { background-color: #27ae60; color: white; }
-        .file-btn { background-color: #2980b9; color: white; }
-        .retry-btn { background-color: #c0392b; color: white; }
-        #file-input { display: none; }
-    </style>
-</head>
-<body>
-    <div id="scanner-container">
-        <h3>Наведите камеру на штрих-код</h3>
-        <video id="video" autoplay playsinline></video>
-        <button class="btn file-btn" onclick="document.getElementById('file-input').click()">📁 Загрузить фото с наклейкой</button>
-        <input type="file" id="file-input" accept="image/*" onchange="handleFile(event)">
-    </div>
-    
-    <div id="success-container">
-        <h3>✅ Найденные штрих-коды:</h3>
-        <div class="code-list" id="result-list"></div>
-        <button class="btn copy-btn" onclick="copyAllCodes()">✓ Скопировать всё</button>
-        <button class="btn retry-btn" onclick="resetScanner()">❌ Сканировать снова</button>
-    </div>
-
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
-
-        let foundCodes = [];
-        const codeReader = new ZXing.BrowserMultiFormatReader();
-        let selectedDeviceId;
-
-        // Запуск камеры в реальном времени
-        async function startCamera() {
-            try {
-                const videoInputDevices = await codeReader.listVideoInputDevices();
-                // Выбираем заднюю камеру (environment)
-                const backCamera = videoInputDevices.find(device => device.label.toLowerCase().includes('back') || device.label.toLowerCase().includes('задняя')) || videoInputDevices[videoInputDevices.length - 1];
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Сканер</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js"></script>
     <style>
@@ -146,6 +33,7 @@
             max-width: 400px; 
             border-radius: 12px; 
             overflow: hidden; 
+            background: #000;
         }
         #success-container {
             display: none;
@@ -202,7 +90,7 @@
     </div>
     
     <div id="success-container">
-        <h3>✅ Найденные коды:</h3>
+        <h3>✅ Найденные штрих-коды:</h3>
         <div class="code-list" id="result-list"></div>
         <button class="btn copy-btn" onclick="copyAllCodes()">✓ Скопировать всё</button>
         <button class="btn retry-btn" onclick="resetScanner()">❌ Сканировать снова</button>
@@ -214,76 +102,95 @@
         tg.expand();
 
         let foundCodes = [];
-        const html5QrCode = new Html5Qrcode("reader");
+        let html5QrCode = null;
         const zxingReader = new ZXing.BrowserMultiFormatReader();
 
         function startCamera() {
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("reader");
+            }
+
             html5QrCode.start(
                 { facingMode: "environment" },
-                { fps: 20, qrbox: { width: 280, height: 130 } },
+                { fps: 15, qrbox: { width: 280, height: 140 } },
                 (text) => {
                     if (!foundCodes.includes(text)) {
                         foundCodes.push(text);
                     }
                     if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-                    html5QrCode.stop().catch(() => {}).finally(() => showSuccess());
+                    stopCameraAndShow();
                 }
             ).catch((err) => {
-                console.log("Камера не запустилась", err);
+                console.log("Камера не запустилась автоматически, можно использовать загрузку фото", err);
             });
         }
 
+        function stopCameraAndShow() {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => {
+                    showSuccess();
+                }).catch(() => {
+                    showSuccess();
+                });
+            } else {
+                showSuccess();
+            }
+        }
+
+        // Запуск камеры при старте
         startCamera();
 
+        // Обработка загруженного файла (ищет сразу ВСЕ штрих-коды)
         async function handleFile(e) {
             if (e.target.files && e.target.files.length > 0) {
                 const file = e.target.files[0];
                 
-                // Останавливаем живую камеру
-                html5QrCode.stop().catch(() => {}).finally(() => {
-                    const reader = new FileReader();
-                    reader.onload = async function (event) {
-                        const img = new Image();
-                        img.onload = async function () {
-                            const canvas = document.createElement('canvas');
-                            const MAX_WIDTH = 1200;
-                            const scaleSize = MAX_WIDTH / img.width;
-                            canvas.width = MAX_WIDTH;
-                            canvas.height = img.height * (scaleSize < 1 ? scaleSize : 1);
-                            
-                            const ctx = canvas.getContext('2d');
-                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                            
-                            const imageUrl = canvas.toDataURL('image/jpeg', 0.9);
+                // Останавливаем камеру, если она работала
+                if (html5QrCode && html5QrCode.isScanning) {
+                    try { await html5QrCode.stop(); } catch(e) {}
+                }
 
-                            try {
-                                // Сканируем фото на поиск нескольких кодов с помощью ZXing
-                                const results = await zxingReader.decodeFromImageUrl(imageUrl);
-                                if (results) {
-                                    const items = Array.isArray(results) ? results : [results];
-                                    foundCodes = [];
-                                    items.forEach(item => {
-                                        if (!foundCodes.includes(item.text)) {
-                                            foundCodes.push(item.text);
-                                        }
-                                    });
+                const reader = new FileReader();
+                reader.onload = async function (event) {
+                    const img = new Image();
+                    img.onload = async function () {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 1600;
+                        const scaleSize = MAX_WIDTH / img.width;
+                        canvas.width = MAX_WIDTH;
+                        canvas.height = img.height * (scaleSize < 1 ? scaleSize : 1);
+                        
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        
+                        const imageUrl = canvas.toDataURL('image/jpeg', 0.95);
 
-                                    if (foundCodes.length > 0) {
-                                        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-                                        showSuccess();
-                                        return;
+                        try {
+                            const results = await zxingReader.decodeFromImageUrl(imageUrl);
+                            if (results) {
+                                const items = Array.isArray(results) ? results : [results];
+                                foundCodes = [];
+                                items.forEach(item => {
+                                    if (!foundCodes.includes(item.text)) {
+                                        foundCodes.push(item.text);
                                     }
+                                });
+
+                                if (foundCodes.length > 0) {
+                                    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                                    showSuccess();
+                                    return;
                                 }
-                                throw new Error();
-                            } catch (err) {
-                                alert("Штрих-коды не найдены на фото. Попробуйте сделать снимок ближе к наклейке.");
-                                resetScanner();
                             }
-                        };
-                        img.src = event.target.result;
+                            throw new Error();
+                        } catch (err) {
+                            alert("Штрих-коды не найдены на фото. Сделайте снимок ближе к наклейке.");
+                            resetScanner();
+                        }
                     };
-                    reader.readAsDataURL(file);
-                });
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
             }
         }
 
@@ -296,7 +203,7 @@
             foundCodes.forEach((code, index) => {
                 const div = document.createElement('div');
                 div.className = 'code-item';
-                div.innerHTML = `<span>Код #${index + 1}</span>${code}`;
+                div.innerHTML = `<span>Штрих-код #${index + 1}</span>${code}`;
                 listContainer.appendChild(div);
             });
 
@@ -313,8 +220,12 @@
 
         function copyAllCodes() {
             const combinedText = foundCodes.join('\n');
-            if (tg.sendData) tg.sendData(combinedText);
-            navigator.clipboard.writeText(combinedText).then(() => tg.close()).catch(() => tg.close());
+            if (tg.sendData) {
+                tg.sendData(combinedText);
+            } else {
+                navigator.clipboard.writeText(combinedText);
+            }
+            tg.close();
         }
     </script>
 </body>
