@@ -102,14 +102,13 @@
         tg.expand();
 
         let foundCodes = [];
-        let html5QrCode = null;
+        const html5QrCode = new Html5Qrcode("reader");
         const zxingReader = new ZXing.BrowserMultiFormatReader();
+        let isCameraRunning = false;
 
         function startCamera() {
-            if (!html5QrCode) {
-                html5QrCode = new Html5Qrcode("reader");
-            }
-
+            if (isCameraRunning) return;
+            
             html5QrCode.start(
                 { facingMode: "environment" },
                 { fps: 15, qrbox: { width: 280, height: 140 } },
@@ -120,16 +119,20 @@
                     if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
                     stopCameraAndShow();
                 }
-            ).catch((err) => {
-                console.log("Камера не запустилась автоматически, можно использовать загрузку фото", err);
+            ).then(() => {
+                isCameraRunning = true;
+            }).catch((err) => {
+                console.log("Ошибка камеры:", err);
             });
         }
 
         function stopCameraAndShow() {
-            if (html5QrCode && html5QrCode.isScanning) {
+            if (isCameraRunning) {
                 html5QrCode.stop().then(() => {
+                    isCameraRunning = false;
                     showSuccess();
                 }).catch(() => {
+                    isCameraRunning = false;
                     showSuccess();
                 });
             } else {
@@ -137,7 +140,7 @@
             }
         }
 
-        // Запуск камеры при старте
+        // Запуск камеры один раз при старте
         startCamera();
 
         // Обработка загруженного файла (ищет сразу ВСЕ штрих-коды)
@@ -145,9 +148,11 @@
             if (e.target.files && e.target.files.length > 0) {
                 const file = e.target.files[0];
                 
-                // Останавливаем камеру, если она работала
-                if (html5QrCode && html5QrCode.isScanning) {
-                    try { await html5QrCode.stop(); } catch(e) {}
+                if (isCameraRunning) {
+                    try { 
+                        await html5QrCode.stop(); 
+                        isCameraRunning = false;
+                    } catch(e) {}
                 }
 
                 const reader = new FileReader();
@@ -166,7 +171,7 @@
                         const imageUrl = canvas.toDataURL('image/jpeg', 0.95);
 
                         try {
-                            const results = await zxingReader.decodeFromImageUrl(imageUrl);
+                            const results = await zxingReader.dup ? null : await zxingReader.decodeFromImageUrl(imageUrl);
                             if (results) {
                                 const items = Array.isArray(results) ? results : [results];
                                 foundCodes = [];
