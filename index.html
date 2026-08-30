@@ -39,31 +39,36 @@
             display: none;
             width: 100%;
             max-width: 400px;
+            min-height: 85vh;
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
             text-align: center;
         }
         .code-list {
             display: flex;
             flex-direction: column;
             gap: 10px;
-            margin: 15px 0 20px 0;
-            max-height: 250px;
+            margin: 15px 0;
             overflow-y: auto;
             text-align: left;
+            flex-grow: 1;
         }
         .code-item {
             font-family: monospace;
-            font-size: 16px;
+            font-size: 18px;
             color: #52cbff;
             background: #2b5278;
-            padding: 10px;
+            padding: 14px;
             border-radius: 8px;
             word-break: break-all;
         }
-        .code-item span {
-            font-size: 11px;
-            color: #b0c4de;
-            display: block;
-            margin-bottom: 2px;
+        .buttons-group {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 10px;
         }
         .btn {
             border: none;
@@ -73,7 +78,6 @@
             cursor: pointer;
             width: 100%;
             font-weight: bold;
-            margin-top: 10px;
         }
         .copy-btn { background-color: #27ae60; color: white; }
         .file-btn { background-color: #2980b9; color: white; }
@@ -85,15 +89,19 @@
     <div id="scanner-container">
         <h3>Наведите камеру на штрих-код</h3>
         <div id="reader"></div>
-        <button class="btn file-btn" onclick="document.getElementById('file-input').click()">Загрузить фото 📁</button>
+        <button class="btn file-btn" style="margin-top: 10px;" onclick="document.getElementById('file-input').click()">Загрузить фото 📁</button>
         <input type="file" id="file-input" accept="image/*" onchange="handleFile(event)">
     </div>
     
     <div id="success-container">
-        <h3>✅ Найденные штрих-коды:</h3>
-        <div class="code-list" id="result-list"></div>
-        <button class="btn copy-btn" onclick="copyAllCodes()">Скопировать всё ✓</button>
-        <button class="btn retry-btn" onclick="resetScanner()">Сканировать снова ❌</button>
+        <div>
+            <h3>✅ Найденные штрих-коды:</h3>
+            <div class="code-list" id="result-list"></div>
+        </div>
+        <div class="buttons-group">
+            <button class="btn copy-btn" onclick="copyAllCodes()">Скопировать ✅</button>
+            <button class="btn retry-btn" onclick="resetScanner()">Сканировать снова ❌</button>
+        </div>
     </div>
 
     <script>
@@ -203,14 +211,14 @@
             const listContainer = document.getElementById('result-list');
             listContainer.innerHTML = '';
             
-            foundCodes.forEach((code, index) => {
+            foundCodes.forEach((code) => {
                 const div = document.createElement('div');
                 div.className = 'code-item';
-                div.innerHTML = `<span>Штрих-код #${index + 1}</span>${code}`;
+                div.textContent = code; // Выводится только сам код без лишних подписей
                 listContainer.appendChild(div);
             });
 
-            document.getElementById('success-container').style.display = 'block';
+            document.getElementById('success-container').style.display = 'flex';
         }
 
         function resetScanner() {
@@ -223,15 +231,10 @@
 
         function copyAllCodes() {
             const combinedText = foundCodes.join('\n');
-            
-            // Сначала пробуем скопировать в буфер обмена
             navigator.clipboard.writeText(combinedText).catch(() => {});
-
-            // Если открыто внутри Telegram, отправляем данные боту и закрываем WebApp
             if (tg.sendData) {
                 tg.sendData(combinedText);
             }
-            
             setTimeout(() => {
                 tg.close();
             }, 100);
