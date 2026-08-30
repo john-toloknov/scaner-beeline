@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Сканер штрих-кодов</title>
+    <title>Сканер</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js"></script>
     <style>
         body { 
             font-family: sans-serif; 
@@ -33,7 +32,6 @@
             max-width: 400px; 
             border-radius: 12px; 
             overflow: hidden; 
-            background: #000;
         }
         #success-container {
             display: none;
@@ -41,29 +39,15 @@
             max-width: 400px;
             text-align: center;
         }
-        .code-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin: 15px 0 20px 0;
-            max-height: 250px;
-            overflow-y: auto;
-            text-align: left;
-        }
-        .code-item {
+        .code-text {
             font-family: monospace;
-            font-size: 16px;
+            font-size: 24px;
             color: #52cbff;
-            background: #2b5278;
-            padding: 10px;
-            border-radius: 8px;
+            margin: 15px 0 20px 0;
             word-break: break-all;
-        }
-        .code-item span {
-            font-size: 11px;
-            color: #b0c4de;
-            display: block;
-            margin-bottom: 2px;
+            background: #2b5278;
+            padding: 12px;
+            border-radius: 10px;
         }
         .btn {
             border: none;
@@ -90,9 +74,9 @@
     </div>
     
     <div id="success-container">
-        <h3>✅ Найденные штрих-коды:</h3>
-        <div class="code-list" id="result-list"></div>
-        <button class="btn copy-btn" onclick="copyAllCodes()">✓ Скопировать всё</button>
+        <h3>✅ Штрих-код считан:</h3>
+        <div class="code-text" id="result-view"></div>
+        <button class="btn copy-btn" onclick="copyCode()">✓ Копировать</button>
         <button class="btn retry-btn" onclick="resetScanner()">❌ Сканировать снова</button>
     </div>
 
@@ -101,136 +85,81 @@
         tg.ready();
         tg.expand();
 
-        let foundCodes = [];
-        const html5QrCode = new Html5Qrcode("reader");
-        const zxingReader = new ZXing.BrowserMultiFormatReader();
-        let isCameraRunning = false;
+        let scannedVal = "";
+        const scanner = new Html5Qrcode("reader");
 
         function startCamera() {
-            if (isCameraRunning) return;
-            
-            html5QrCode.start(
+            scanner.start(
                 { facingMode: "environment" },
-                { fps: 15, qrbox: { width: 280, height: 140 } },
+                { fps: 20, qrbox: { width: 280, height: 130 } },
                 (text) => {
-                    if (!foundCodes.includes(text)) {
-                        foundCodes.push(text);
-                    }
+                    scannedVal = text;
                     if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-                    stopCameraAndShow();
+                    scanner.stop().then(() => showSuccess(text)).catch(() => showSuccess(text));
                 }
-            ).then(() => {
-                isCameraRunning = true;
-            }).catch((err) => {
-                console.log("Ошибка камеры:", err);
-            });
+            ).catch(() => {});
         }
 
-        function stopCameraAndShow() {
-            if (isCameraRunning) {
-                html5QrCode.stop().then(() => {
-                    isCameraRunning = false;
-                    showSuccess();
-                }).catch(() => {
-                    isCameraRunning = false;
-                    showSuccess();
-                });
-            } else {
-                showSuccess();
-            }
-        }
-
-        // Запуск камеры один раз при старте
         startCamera();
 
-        // Обработка загруженного файла (ищет сразу ВСЕ штрих-коды)
-        async function handleFile(e) {
+        function handleFile(e) {
             if (e.target.files && e.target.files.length > 0) {
                 const file = e.target.files[0];
                 
-                if (isCameraRunning) {
-                    try { 
-                        await html5QrCode.stop(); 
-                        isCameraRunning = false;
-                    } catch(e) {}
-                }
-
-                const reader = new FileReader();
-                reader.onload = async function (event) {
-                    const img = new Image();
-                    img.onload = async function () {
-                        const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 1600;
-                        const scaleSize = MAX_WIDTH / img.width;
-                        canvas.width = MAX_WIDTH;
-                        canvas.height = img.height * (scaleSize < 1 ? scaleSize : 1);
-                        
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        
-                        const imageUrl = canvas.toDataURL('image/jpeg', 0.95);
-
-                        try {
-                            const results = await zxingReader.dup ? null : await zxingReader.decodeFromImageUrl(imageUrl);
-                            if (results) {
-                                const items = Array.isArray(results) ? results : [results];
-                                foundCodes = [];
-                                items.forEach(item => {
-                                    if (!foundCodes.includes(item.text)) {
-                                        foundCodes.push(item.text);
-                                    }
-                                });
-
-                                if (foundCodes.length > 0) {
-                                    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-                                    showSuccess();
-                                    return;
-                                }
-                            }
-                            throw new Error();
-                        } catch (err) {
-                            alert("Штрих-коды не найдены на фото. Сделайте снимок ближе к наклейке.");
-                            resetScanner();
-                        }
+                // Останавливаем камеру перед обработкой файла
+                scanner.stop().catch(() => {}).finally(() => {
+                    // Сжимаем картинку через canvas, чтобы библиотека легко её прочитала
+                    const reader = new FileReader();
+                    reader.onload = function (event) {
+                        const img = new Image();
+                        img.onload = function () {
+                            const canvas = document.createElement('canvas');
+                            const MAX_WIDTH = 1000;
+                            const scaleSize = MAX_WIDTH / img.width;
+                            canvas.width = MAX_WIDTH;
+                            canvas.height = img.height * (scaleSize < 1 ? scaleSize : 1);
+                            
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                            
+                            canvas.toBlob((blob) => {
+                                const compressedFile = new File([blob], file.name, { type: 'image/jpeg' });
+                                
+                                scanner.scanFile(compressedFile, true)
+                                    .then(text => {
+                                        scannedVal = text;
+                                        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                                        showSuccess(text);
+                                    })
+                                    .catch(() => {
+                                        alert("Штрих-код не найден на фото. Попробуйте сделать снимок ближе к наклейке.");
+                                        resetScanner();
+                                    });
+                            }, 'image/jpeg', 0.9);
+                        };
+                        img.src = event.target.result;
                     };
-                    img.src = event.target.result;
-                };
-                reader.readAsDataURL(file);
+                    reader.readAsDataURL(file);
+                });
             }
         }
 
-        function showSuccess() {
+        function showSuccess(text) {
             document.getElementById('scanner-container').style.display = 'none';
-            
-            const listContainer = document.getElementById('result-list');
-            listContainer.innerHTML = '';
-            
-            foundCodes.forEach((code, index) => {
-                const div = document.createElement('div');
-                div.className = 'code-item';
-                div.innerHTML = `<span>Штрих-код #${index + 1}</span>${code}`;
-                listContainer.appendChild(div);
-            });
-
+            document.getElementById('result-view').innerText = text;
             document.getElementById('success-container').style.display = 'block';
         }
 
         function resetScanner() {
-            foundCodes = [];
             document.getElementById('success-container').style.display = 'none';
             document.getElementById('scanner-container').style.display = 'flex';
             document.getElementById('file-input').value = '';
             startCamera();
         }
 
-        function copyAllCodes() {
-            const combinedText = foundCodes.join('\n');
-            if (tg.sendData) {
-                tg.sendData(combinedText);
-            } else {
-                navigator.clipboard.writeText(combinedText);
-            }
-            tg.close();
+        function copyCode() {
+            if (tg.sendData) tg.sendData(scannedVal);
+            navigator.clipboard.writeText(scannedVal).then(() => tg.close()).catch(() => tg.close());
         }
     </script>
 </body>
