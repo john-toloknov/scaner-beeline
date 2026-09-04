@@ -40,6 +40,7 @@
             width: 100%;
             max-width: 400px;
             min-height: 85vh;
+            display: none;
             flex-direction: column;
             justify-content: space-between;
             text-align: center;
@@ -116,30 +117,9 @@
         function startCamera() {
             if (isCameraRunning) return;
             
-            // Настройка конфигурации сканера под узкие горизонтальные штрих-коды
-            const config = { 
-                fps: 20, 
-                qrbox: function(viewfinderWidth, viewfinderHeight) {
-                    return {
-                        width: Math.floor(viewfinderWidth * 0.85),
-                        height: Math.floor(viewfinderHeight * 0.25)
-                    };
-                },
-                experimentalFeatures: {
-                    useBarCodeDetectorIfSupported: true
-                }
-            };
-
-            // Запрос качественного разрешения камеры для чтения мелких линий
-            const constraints = {
-                facingMode: "environment",
-                width: { ideal: 1920 },
-                height: { ideal: 1080 }
-            };
-
             html5QrCode.start(
-                constraints,
-                config,
+                { facingMode: "environment" },
+                { fps: 15, qrbox: { width: 280, height: 140 } },
                 (text) => {
                     if (!foundCodes.includes(text)) {
                         foundCodes.push(text);
@@ -147,23 +127,8 @@
                     if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
                     stopCameraAndShow();
                 }
-            ).then((cameraCapabilities) => {
+            ).then(() => {
                 isCameraRunning = true;
-                
-                // Пробуем включить небольшой зум (1.5x), чтобы проще захватывать мелкие наклейки
-                try {
-                    if (cameraCapabilities && cameraCapabilities.zoom) {
-                        const maxZoom = cameraCapabilities.zoom.max || 1;
-                        const targetZoom = Math.min(1.5, maxZoom);
-                        if (targetZoom > 1) {
-                            html5QrCode.applyVideoConstraints({
-                                advanced: [{ zoom: targetZoom }]
-                            });
-                        }
-                    }
-                } catch (e) {
-                    console.log("Зум не поддерживается устройством");
-                }
             }).catch((err) => {
                 console.log("Ошибка камеры:", err);
             });
@@ -249,7 +214,7 @@
             foundCodes.forEach((code) => {
                 const div = document.createElement('div');
                 div.className = 'code-item';
-                div.textContent = code;
+                div.textContent = code; // Выводится только сам код без лишних подписей
                 listContainer.appendChild(div);
             });
 
