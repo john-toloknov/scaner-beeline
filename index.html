@@ -846,10 +846,6 @@
                     <!-- Кнопка загрузки из галереи -->
                     <label class="file-upload-label" for="photoInput">📂 Загрузить из галереи</label>
                     <input type="file" id="photoInput" accept="image/*" multiple style="display:none;" onchange="handlePhotoUpload(event, 10)">
-                    
-                    <!-- Кнопка быстрой съемки с камеры (capture="environment") -->
-                    <label class="file-upload-label" for="photoCameraInput" style="background-color: #252525; border-color: var(--beeline-yellow);">📷 Сделать фото</label>
-                    <input type="file" id="photoCameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handlePhotoUpload(event, 10)">
 
                     <div class="photo-preview-grid" id="photoPreviewContainer"></div>
                 </div>
@@ -996,16 +992,12 @@
                     <label style="margin-top: 15px;">До ППР (до 20 штук):</label>
                     <label class="file-upload-label" for="pprPhotoBeforeInput">📂 Загрузить ДО из галереи</label>
                     <input type="file" id="pprPhotoBeforeInput" accept="image/*" multiple style="display:none;" onchange="handlePprPhotoUpload(event, 'before', 20)">
-                    <label class="file-upload-label" for="pprPhotoBeforeCameraInput" style="background-color: #252525; border-color: var(--beeline-yellow);">📷 Сделать фото ДО</label>
-                    <input type="file" id="pprPhotoBeforeCameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handlePprPhotoUpload(event, 'before', 20)">
                     <div class="photo-preview-grid" id="pprPhotoBeforeContainer"></div>
 
                     <!-- Фото После ППР -->
                     <label style="margin-top: 15px;">После ППР (до 20 штук):</label>
                     <label class="file-upload-label" for="pprPhotoAfterInput">📂 Загрузить ПОСЛЕ из галереи</label>
                     <input type="file" id="pprPhotoAfterInput" accept="image/*" multiple style="display:none;" onchange="handlePprPhotoUpload(event, 'after', 20)">
-                    <label class="file-upload-label" for="pprPhotoAfterCameraInput" style="background-color: #252525; border-color: var(--beeline-yellow);">📷 Сделать фото ПОСЛЕ</label>
-                    <input type="file" id="pprPhotoAfterCameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handlePprPhotoUpload(event, 'after', 20)">
                     <div class="photo-preview-grid" id="pprPhotoAfterContainer"></div>
                 </div>
 
@@ -1064,6 +1056,7 @@
         "Basic (Модель F1O-D)",
         "TP-Link Archer C20",
         "TP-Link Archer C24",
+        "DGP X3000TR (GPON)",
         "TP-Link HC220-G5 (Ultimate White)",
         "AX3000 (Ultimate Black)",
         "TP-Link DEKO M4 (Ultimate)",
