@@ -3,242 +3,1441 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Сканер штрих-кодов</title>
+    <title>Отчет монтажника Beeline</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js"></script>
     <style>
-        body { 
-            font-family: sans-serif; 
-            margin: 0; 
-            padding: 10px; 
-            background: #17212b; 
-            color: white; 
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --card-border: #333333;
+            --beeline-yellow: #FFCC00;
+            --beeline-yellow-hover: #e6b800;
+            --beeline-dark: #111111;
+            --text-main: #ffffff;
+            --text-secondary: #aaaaaa;
+            --danger: #ff4d4d;
+            --success: #2ecc71;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 15px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
-            min-height: 95vh;
         }
-        #scanner-container {
+
+        .container {
             width: 100%;
-            max-width: 400px;
+            max-width: 480px;
+        }
+
+        h2, h3 {
+            color: var(--beeline-yellow);
             text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            margin-bottom: 20px;
         }
-        #reader { 
-            width: 100%; 
-            max-width: 400px; 
-            border-radius: 12px; 
-            overflow: hidden; 
-            background: #000;
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 15px;
+            position: relative;
         }
-        #success-container {
-            display: none;
+
+        label {
+            display: block;
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+            margin-top: 10px;
+            padding-left: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        input, textarea {
             width: 100%;
-            max-width: 400px;
-            min-height: 85vh;
-            display: none;
-            flex-direction: column;
-            justify-content: space-between;
-            text-align: center;
+            padding: 12px 14px;
+            background-color: var(--beeline-dark);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            color: var(--text-main);
+            font-size: 14px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
         }
-        .code-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin: 15px 0;
-            overflow-y: auto;
-            text-align: left;
-            flex-grow: 1;
+
+        input:focus, textarea:focus {
+            border-color: var(--beeline-yellow);
+            box-shadow: 0 0 0 1px var(--beeline-yellow);
         }
-        .code-item {
-            font-family: monospace;
-            font-size: 18px;
-            color: #52cbff;
-            background: #2b5278;
-            padding: 14px;
-            border-radius: 8px;
-            word-break: break-all;
-        }
-        .buttons-group {
+
+        .date-input-wrapper {
+            position: relative;
             width: 100%;
-            display: flex;
-            flex-direction: column;
+        }
+
+        .date-input-wrapper input[type="date"] {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-color: var(--beeline-dark);
+            color: var(--text-main);
+            cursor: pointer;
+            padding-right: 35px;
+        }
+
+        .date-input-wrapper::after {
+            content: "▼";
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 10px;
+            color: var(--beeline-yellow);
+            pointer-events: none;
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            width: auto; height: auto;
+            color: transparent; background: transparent;
+            cursor: pointer;
+        }
+
+        .materials-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 10px;
+        }
+
+        .materials-grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+        }
+
+        .materials-grid-2 .field-container,
+        .materials-grid-3 .field-container {
+            width: 100%;
+            min-width: 0;
+        }
+
+        .accordion-item {
+            background-color: #252525;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
             margin-bottom: 10px;
+            overflow: visible;
+            transition: border-color 0.2s;
+            position: relative;
         }
+
+        .accordion-item:hover {
+            border-color: #555;
+        }
+
+        .accordion-item:nth-child(1) { z-index: 60; }
+        .accordion-item:nth-child(2) { z-index: 55; }
+        .accordion-item:nth-child(3) { z-index: 50; }
+        .accordion-item:nth-child(4) { z-index: 45; }
+        .accordion-item:nth-child(5) { z-index: 40; }
+        .accordion-item:nth-child(6) { z-index: 35; }
+
+        .accordion-header {
+            width: 100%;
+            padding: 14px 16px;
+            background: none;
+            border: none;
+            color: var(--text-main);
+            font-size: 15px;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        .accordion-header::after {
+            content: "▼";
+            font-size: 11px;
+            color: var(--beeline-yellow);
+            transition: transform 0.3s ease;
+        }
+
+        .accordion-item.open .accordion-header::after {
+            transform: rotate(180deg);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+            padding: 0 16px;
+            background-color: var(--card-bg);
+            border-radius: 0 0 10px 10px;
+        }
+
+        .accordion-item.open .accordion-content {
+            max-height: 600px;
+            padding: 0 16px 16px 16px;
+            border-top: 1px solid var(--card-border);
+            overflow: visible;
+        }
+
+        .custom-dropdown {
+            position: relative;
+            width: 100%;
+        }
+
+        .dropdown-select-btn {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--card-border);
+            background: var(--beeline-dark);
+            color: var(--text-main);
+            font-size: 14px;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+
+        .dropdown-select-btn:hover {
+            border-color: var(--beeline-yellow);
+        }
+
+        .dropdown-select-btn::after {
+            content: "▼";
+            font-size: 10px;
+            color: var(--beeline-yellow);
+            margin-left: 10px;
+        }
+
+        .dropdown-list {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            width: 100%;
+            background: #1c1c1c;
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.9);
+            max-height: 220px;
+            overflow-y: auto;
+            z-index: 9999;
+            display: none;
+            box-sizing: border-box;
+        }
+
+        .dropdown-list.open {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 12px 14px;
+            font-size: 14px;
+            color: var(--text-main);
+            cursor: pointer;
+            border-bottom: 1px solid #222;
+            transition: background 0.15s;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(255, 204, 0, 0.15);
+            color: var(--beeline-yellow);
+        }
+
+        .dropdown-item-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            font-size: 14px;
+            color: var(--text-main);
+            cursor: pointer;
+            border-bottom: 1px solid #222;
+            transition: background 0.15s;
+        }
+
+        .dropdown-item-checkbox:hover {
+            background: rgba(255, 204, 0, 0.15);
+            color: var(--beeline-yellow);
+        }
+
+        .dropdown-item-checkbox input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--beeline-yellow);
+            cursor: pointer;
+        }
+
+        .dropdown-group-label {
+            padding: 8px 14px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--beeline-yellow);
+            background: #121212;
+            border-bottom: 1px solid #222;
+            border-top: 1px solid #222;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .input-group input {
+            flex: 1;
+        }
+
+        .btn-scan {
+            background-color: #2b2b2b;
+            border: 1px solid var(--card-border);
+            color: var(--beeline-yellow);
+            padding: 0 12px;
+            height: 45px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        .btn-scan:active {
+            background-color: #3b3b3b;
+        }
+
         .btn {
             border: none;
             padding: 14px;
-            font-size: 16px;
-            border-radius: 8px;
+            font-size: 15px;
+            border-radius: 12px;
             cursor: pointer;
             width: 100%;
-            font-weight: bold;
+            font-weight: 700;
+            transition: transform 0.1s ease, background-color 0.2s ease, border-color 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-sizing: border-box;
+            margin-top: 15px;
         }
-        .copy-btn { background-color: #27ae60; color: white; }
-        .file-btn { background-color: #2980b9; color: white; }
-        .retry-btn { background-color: #c0392b; color: white; }
-        #file-input { display: none; }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .main-btn { 
+            background-color: var(--beeline-yellow); 
+            color: #000000; 
+            box-shadow: 0 4px 14px rgba(255, 204, 0, 0.2);
+        }
+        .main-btn:hover {
+            background-color: var(--beeline-yellow-hover);
+        }
+
+        .action-btn {
+            background-color: var(--card-bg);
+            color: var(--text-main);
+            border: 1px solid var(--card-border);
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .action-btn:hover {
+            border-color: var(--beeline-yellow);
+            color: var(--beeline-yellow);
+        }
+
+        .step {
+            display: none;
+        }
+        .step.active {
+            display: block;
+        }
+
+        .gpon-only, .ppr-only, .standard-report-block {
+            display: none;
+        }
+
+        #scanner-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #reader {
+            width: 100%;
+            max-width: 350px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .photo-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .photo-thumb {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #222;
+            border: 1px solid var(--card-border);
+        }
+        .photo-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .photo-thumb .delete-btn {
+            position: absolute;
+            top: 2px; right: 2px;
+            background: rgba(0,0,0,0.7);
+            color: var(--danger);
+            border: none;
+            border-radius: 50%;
+            width: 20px; height: 20px;
+            font-size: 11px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .file-upload-label {
+            display: block;
+            background: var(--beeline-dark);
+            border: 2px dashed var(--card-border);
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--beeline-yellow);
+            font-weight: bold;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
-    <div id="scanner-container">
-        <h3>Наведите камеру на штрих-код</h3>
-        <div id="reader"></div>
-        <button class="btn file-btn" style="margin-top: 10px;" onclick="document.getElementById('file-input').click()">Загрузить фото 📁</button>
-        <input type="file" id="file-input" accept="image/*" onchange="handleFile(event)">
-    </div>
-    
-    <div id="success-container">
-        <div>
-            <h3>✅ Найденные штрих-коды:</h3>
-            <div class="code-list" id="result-list"></div>
+
+<div class="container">
+    <h2>Отчет монтажника</h2>
+
+    <form id="reportForm" onsubmit="submitReport(event)">
+        
+        <!-- ВЫБОР ТИПА ОТЧЕТА -->
+        <div class="card" style="z-index: 100;">
+            <label>Вид отчета:</label>
+            <div class="custom-dropdown">
+                <button type="button" class="dropdown-select-btn" id="reportType-btn" onclick="toggleDropdown(event, 'reportType-list')">Включение FTTB</button>
+                <input type="hidden" id="reportType" value="Включение FTTB">
+                <div class="dropdown-list" id="reportType-list">
+                    <div class="dropdown-group-label">FTTB</div>
+                    <div class="dropdown-item" onclick="selectOption('reportType', 'Включение FTTB', 'reportType-btn', 'Включение FTTB', 'reportType-list'); handleReportTypeChange();">Включение FTTB</div>
+                    <div class="dropdown-item" onclick="selectOption('reportType', 'Переезд FTTB', 'reportType-btn', 'Переезд FTTB', 'reportType-list'); handleReportTypeChange();">Переезд FTTB</div>
+                    <div class="dropdown-item" onclick="selectOption('reportType', 'Сервис FTTB', 'reportType-btn', 'Сервис FTTB', 'reportType-list'); handleReportTypeChange();">Сервис FTTB</div>
+                    <div class="dropdown-item" onclick="selectOption('reportType', 'Демонтаж FTTB', 'reportType-btn', 'Демонтаж FTTB', 'reportType-list'); handleReportTypeChange();">Демонтаж FTTB</div>
+                    <div class="dropdown-item" onclick="selectOption('reportType', 'ППР FTTB', 'reportType-btn', 'ППР FTTB', 'reportType-list'); handleReportTypeChange();">ППР FTTB</div>
+                    
+                    <div class="dropdown-group-label">GPON</div>
+                    <div class="dropdown-item" onclick="selectOption('reportType', 'Включение GPON', 'reportType-btn', 'Включение GPON', 'reportType-list'); handleReportTypeChange();">Включение GPON</div>
+                    <div class="dropdown-item" onclick="selectOption('reportType', 'Переезд GPON', 'reportType-btn', 'Переезд GPON', 'reportType-list'); handleReportTypeChange();">Переезд GPON</div>
+                    <div class="dropdown-item" onclick="selectOption('reportType', 'Сервис GPON', 'reportType-btn', 'Сервис GPON', 'reportType-list'); handleReportTypeChange();">Сервис GPON</div>
+                    <div class="dropdown-item" onclick="selectOption('reportType', 'Демонтаж GPON', 'reportType-btn', 'Демонтаж GPON', 'reportType-list'); handleReportTypeChange();">Демонтаж GPON</div>
+                    <div class="dropdown-item" onclick="selectOption('reportType', 'ППР GPON', 'reportType-btn', 'ППР GPON', 'reportType-list'); handleReportTypeChange();">ППР GPON</div>
+                </div>
+            </div>
+
+            <label for="reportDate" id="dateLabel">Дата монтажа:</label>
+            <div class="date-input-wrapper">
+                <input type="date" id="reportDate" required>
+            </div>
         </div>
-        <div class="buttons-group">
-            <button class="btn copy-btn" onclick="copyAllCodes()">Скопировать ✅</button>
-            <button class="btn retry-btn" onclick="resetScanner()">Сканировать снова ❌</button>
+
+        <!-- ================= СТАНДАРТНЫЕ ШАГИ ================= -->
+        <div class="standard-report-block">
+            <!-- ШАГ 1: ДАННЫЕ АБОНЕНТА -->
+            <div class="step active" id="step-client">
+                <div class="card">
+                    <h3>Данные абонента</h3>
+                    <label>Номер заявки</label>
+                    <input type="text" id="appNumber" placeholder="940299">
+
+                    <label>Адрес</label>
+                    <input type="text" id="address" placeholder="просп. Республики 69/1 21">
+
+                    <label>Логин</label>
+                    <input type="text" id="login" placeholder="0017100080">
+
+                    <label>ФИО абонента</label>
+                    <input type="text" id="clientName" placeholder="Усачёва Мария Александровна">
+                </div>
+                <button type="button" class="btn main-btn" onclick="nextStep(1)">Далее ➡️</button>
+            </div>
+
+            <!-- ШАГ 2: РАСХОДНЫЕ МАТЕРИАЛЫ -->
+            <div class="step" id="step-materials">
+                <div class="card">
+                    <h3>Расходные материалы</h3>
+                    
+                    <label>Способ перетяжки</label>
+                    <div class="custom-dropdown">
+                        <button type="button" class="dropdown-select-btn" id="pullMethod-btn" onclick="toggleDropdown(event, 'pullMethod-list')">Выберите способ</button>
+                        <input type="hidden" id="pullMethod" value="">
+                        <div class="dropdown-list" id="pullMethod-list">
+                            <div class="dropdown-item" onclick="selectOption('pullMethod', 'Дрс', 'pullMethod-btn', 'Дрс', 'pullMethod-list')">Дрс</div>
+                            <div class="dropdown-item" onclick="selectOption('pullMethod', 'Шахта', 'pullMethod-btn', 'Шахта', 'pullMethod-list')">Шахта</div>
+                            <div class="dropdown-item" onclick="selectOption('pullMethod', 'Окно', 'pullMethod-btn', 'Окно', 'pullMethod-list')">Окно</div>
+                        </div>
+                    </div>
+
+                    <div class="materials-grid-2">
+                        <div class="field-container">
+                            <label>Номер кабеля</label>
+                            <input type="text" id="cableNum" placeholder="9922281">
+                        </div>
+                        <div class="field-container">
+                            <label>Кол-во Кабеля</label>
+                            <input type="number" step="0.1" id="cableQty" placeholder="65">
+                        </div>
+                    </div>
+
+                    <div class="materials-grid-2">
+                        <div class="field-container">
+                            <label>Номер патч-корда</label>
+                            <input type="text" id="patchCableNum" placeholder="15593">
+                        </div>
+                        <div class="field-container">
+                            <label>Кол-во патч-корда</label>
+                            <input type="number" step="0.1" id="patchCableQty" placeholder="15">
+                        </div>
+                    </div>
+
+                    <div class="materials-grid-2">
+                        <div class="field-container">
+                            <label>Кол-во коннекторов</label>
+                            <input type="number" id="connectorsQty" placeholder="10">
+                        </div>
+                        <div class="field-container">
+                            <label>Кол-во изоленты</label>
+                            <input type="number" id="tapeQty" placeholder="1">
+                        </div>
+                    </div>
+
+                    <div class="materials-grid-3">
+                        <div class="field-container">
+                            <label>Кол-во клипс</label>
+                            <input type="number" id="clipsQty" placeholder="45">
+                        </div>
+                        <div class="field-container">
+                            <label>Кол-во хомутов</label>
+                            <input type="number" id="clampsQty" placeholder="30">
+                        </div>
+                        <div class="field-container">
+                            <label>Кол-во UY2</label>
+                            <input type="number" id="uy2Qty" placeholder="10">
+                        </div>
+                    </div>
+
+                    <!-- СПЕЦИФИЧНЫЕ РАСХОДНИКИ ДЛЯ GPON -->
+                    <div class="gpon-only">
+                        <div class="materials-grid-2" style="margin-top: 12px;">
+                            <div class="field-container">
+                                <label>Кабель канал 10/15</label>
+                                <input type="number" step="0.1" id="cc1015" placeholder="Метров">
+                            </div>
+                            <div class="field-container">
+                                <label>Кабель канал 20/10</label>
+                                <input type="number" step="0.1" id="cc2010" placeholder="Метров">
+                            </div>
+                        </div>
+
+                        <div class="materials-grid-3" style="margin-top: 8px;">
+                            <div class="field-container">
+                                <label>Внешний угол</label>
+                                <input type="number" step="0.1" id="extCorner" placeholder="Метров">
+                            </div>
+                            <div class="field-container">
+                                <label>Внутренний угол</label>
+                                <input type="number" step="0.1" id="intCorner" placeholder="Метров">
+                            </div>
+                            <div class="field-container">
+                                <label>Поворотный угол</label>
+                                <input type="number" step="0.1" id="ftthTurnCorner" placeholder="Метров">
+                            </div>
+                        </div>
+
+                        <div class="materials-grid-3" style="margin-top: 8px;">
+                            <div class="field-container">
+                                <label>Хвостовик поворотный</label>
+                                <input type="number" id="ftthTail" placeholder="Штук">
+                            </div>
+                            <div class="field-container">
+                                <label>Дюбель гвозди 6*40</label>
+                                <input type="number" id="dowels" placeholder="Штук">
+                            </div>
+                            <div class="field-container">
+                                <label>Кабельная клипса FTTH</label>
+                                <input type="number" id="ftthClip" placeholder="Штук">
+                            </div>
+                        </div>
+
+                        <div class="materials-grid-2" style="margin-top: 8px;">
+                            <div class="field-container">
+                                <label>Кабельный настенный ввод FTTH</label>
+                                <input type="number" id="ftthWallIn" placeholder="Штук">
+                            </div>
+                            <div class="field-container"></div>
+                        </div>
+
+                        <div class="materials-grid-2" style="margin-top: 8px;">
+                            <div class="field-container">
+                                <label>Оптические патч-корд</label>
+                                <input type="number" step="0.1" id="optPatchMeters" placeholder="Метров">
+                            </div>
+                            <div class="field-container">
+                                <label>&nbsp;</label>
+                                <input type="number" id="optPatchCount" placeholder="Штук">
+                            </div>
+                        </div>
+
+                        <div class="materials-grid-2" style="margin-top: 8px;">
+                            <div class="field-container">
+                                <label>Коннектор SOC SC/APC 3.0mm</label>
+                                <input type="number" id="socConnector" placeholder="Штук">
+                            </div>
+                            <div class="field-container">
+                                <label>Fast-коннектор FTTH-SC/APC</label>
+                                <input type="number" id="fastConnector" placeholder="Штук">
+                            </div>
+                        </div>
+
+                        <div class="materials-grid-2" style="margin-top: 8px;">
+                            <div class="field-container">
+                                <label>Оптическая гильза КДЗС 60мм</label>
+                                <input type="number" id="kdzs" placeholder="Штук">
+                            </div>
+                            <div class="field-container">
+                                <label>Адаптер</label>
+                                <input type="number" id="adapter" placeholder="Штук">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn action-btn" onclick="prevStep(2)">⬅️ Назад</button>
+                <button type="button" class="btn main-btn" onclick="nextStep(2)">Далее ➡️</button>
+            </div>
+
+            <!-- ШАГ 3: ОБОРУДОВАНИЕ -->
+            <div class="step" id="step-equipment">
+                <div class="card">
+                    <h3>Оборудование</h3>
+                    
+                    <!-- Роутер 1 -->
+                    <div class="accordion-item open">
+                        <button type="button" class="accordion-header" onclick="toggleAccordion(this)">Роутер 1</button>
+                        <div class="accordion-content">
+                            <label>Модель роутера 1</label>
+                            <div class="custom-dropdown">
+                                <button type="button" class="dropdown-select-btn" id="r1Model-btn" onclick="toggleDropdown(event, 'r1Model-list')">TP-Link EX222 (AX-1800)</button>
+                                <input type="hidden" id="r1Model" value="TP-Link EX222 (AX-1800)">
+                                <div class="dropdown-list" id="r1Model-list"></div>
+                            </div>
+
+                            <label>Серийный номер роутера 1</label>
+                            <div class="input-group">
+                                <input type="text" id="r1Sn">
+                                <button type="button" class="btn-scan" onclick="openScanner('r1Sn')">📷 Сканировать</button>
+                            </div>
+                            <label>MAC адрес роутера 1</label>
+                            <div class="input-group">
+                                <input type="text" id="r1Mac">
+                                <button type="button" class="btn-scan" onclick="openScanner('r1Mac')">📷 Сканировать</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Роутер 2 -->
+                    <div class="accordion-item">
+                        <button type="button" class="accordion-header" onclick="toggleAccordion(this)">Роутер 2</button>
+                        <div class="accordion-content">
+                            <label>Модель роутера 2</label>
+                            <div class="custom-dropdown">
+                                <button type="button" class="dropdown-select-btn" id="r2Model-btn" onclick="toggleDropdown(event, 'r2Model-list')">Роутер абонента</button>
+                                <input type="hidden" id="r2Model" value="Роутер абонента">
+                                <div class="dropdown-list" id="r2Model-list"></div>
+                            </div>
+
+                            <label>Серийный номер роутера 2</label>
+                            <div class="input-group">
+                                <input type="text" id="r2Sn">
+                                <button type="button" class="btn-scan" onclick="openScanner('r2Sn')">📷 Сканировать</button>
+                            </div>
+                            <label>MAC адрес роутера 2</label>
+                            <div class="input-group">
+                                <input type="text" id="r2Mac">
+                                <button type="button" class="btn-scan" onclick="openScanner('r2Mac')">📷 Сканировать</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Роутер 3 -->
+                    <div class="accordion-item">
+                        <button type="button" class="accordion-header" onclick="toggleAccordion(this)">Роутер 3</button>
+                        <div class="accordion-content">
+                            <label>Модель роутера 3</label>
+                            <div class="custom-dropdown">
+                                <button type="button" class="dropdown-select-btn" id="r3Model-btn" onclick="toggleDropdown(event, 'r3Model-list')">Роутер абонента</button>
+                                <input type="hidden" id="r3Model" value="Роутер абонента">
+                                <div class="dropdown-list" id="r3Model-list"></div>
+                            </div>
+
+                            <label>Серийный номер роутера 3</label>
+                            <div class="input-group">
+                                <input type="text" id="r3Sn">
+                                <button type="button" class="btn-scan" onclick="openScanner('r3Sn')">📷 Сканировать</button>
+                            </div>
+                            <label>MAC адрес роутера 3</label>
+                            <div class="input-group">
+                                <input type="text" id="r3Mac">
+                                <button type="button" class="btn-scan" onclick="openScanner('r3Mac')">📷 Сканировать</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Приставка 1 -->
+                    <div class="accordion-item">
+                        <button type="button" class="accordion-header" onclick="toggleAccordion(this)">Приставка 1</button>
+                        <div class="accordion-content">
+                            <label>Модель приставки 1</label>
+                            <div class="custom-dropdown">
+                                <button type="button" class="dropdown-select-btn" id="tv1Model-btn" onclick="toggleDropdown(event, 'tv1Model-list')">Без приставки</button>
+                                <input type="hidden" id="tv1Model" value="Без приставки">
+                                <div class="dropdown-list" id="tv1Model-list"></div>
+                            </div>
+
+                            <label>Серийный номер приставки 1</label>
+                            <div class="input-group">
+                                <input type="text" id="tv1Sn">
+                                <button type="button" class="btn-scan" onclick="openScanner('tv1Sn')">📷 Сканировать</button>
+                            </div>
+                            <label>MAC адрес приставки 1</label>
+                            <div class="input-group">
+                                <input type="text" id="tv1Mac">
+                                <button type="button" class="btn-scan" onclick="openScanner('tv1Mac')">📷 Сканировать</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Приставка 2 -->
+                    <div class="accordion-item">
+                        <button type="button" class="accordion-header" onclick="toggleAccordion(this)">Приставка 2</button>
+                        <div class="accordion-content">
+                            <label>Модель приставки 2</label>
+                            <div class="custom-dropdown">
+                                <button type="button" class="dropdown-select-btn" id="tv2Model-btn" onclick="toggleDropdown(event, 'tv2Model-list')">Без приставки</button>
+                                <input type="hidden" id="tv2Model" value="Без приставки">
+                                <div class="dropdown-list" id="tv2Model-list"></div>
+                            </div>
+
+                            <label>Серийный номер приставки 2</label>
+                            <div class="input-group">
+                                <input type="text" id="tv2Sn">
+                                <button type="button" class="btn-scan" onclick="openScanner('tv2Sn')">📷 Сканировать</button>
+                            </div>
+                            <label>MAC адрес приставки 2</label>
+                            <div class="input-group">
+                                <input type="text" id="tv2Mac">
+                                <button type="button" class="btn-scan" onclick="openScanner('tv2Mac')">📷 Сканировать</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Приставка 3 -->
+                    <div class="accordion-item">
+                        <button type="button" class="accordion-header" onclick="toggleAccordion(this)">Приставка 3</button>
+                        <div class="accordion-content">
+                            <label>Модель приставки 3</label>
+                            <div class="custom-dropdown">
+                                <button type="button" class="dropdown-select-btn" id="tv3Model-btn" onclick="toggleDropdown(event, 'tv3Model-list')">Без приставки</button>
+                                <input type="hidden" id="tv3Model" value="Без приставки">
+                                <div class="dropdown-list" id="tv3Model-list"></div>
+                            </div>
+
+                            <label>Серийный номер приставки 3</label>
+                            <div class="input-group">
+                                <input type="text" id="tv3Sn">
+                                <button type="button" class="btn-scan" onclick="openScanner('tv3Sn')">📷 Сканировать</button>
+                            </div>
+                            <label>MAC адрес приставки 3</label>
+                            <div class="input-group">
+                                <input type="text" id="tv3Mac">
+                                <button type="button" class="btn-scan" onclick="openScanner('tv3Mac')">📷 Сканировать</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <button type="button" class="btn action-btn" onclick="prevStep(3)">⬅️ Назад</button>
+                <button type="button" class="btn main-btn" onclick="nextStep(3)">Далее ➡️</button>
+            </div>
+
+            <!-- ШАГ 4: ЗАВЕРШЕНИЕ СТАНДАРТНОГО ОТЧЕТА -->
+            <div class="step" id="step-finish">
+                <div class="card">
+                    <h3>Завершение отчета</h3>
+                    
+                    <label>Акт</label>
+                    <input type="text" id="actStatus" value="Не сдан" readonly style="color: var(--text-secondary);">
+
+                    <label>ФИО Монтажника</label>
+                    <div class="custom-dropdown">
+                        <button type="button" class="dropdown-select-btn" id="installer-btn" onclick="toggleDropdown(event, 'installer-list')">Выберите монтажника</button>
+                        <input type="hidden" id="installerName">
+                        <div class="dropdown-list" id="installer-list"></div>
+                    </div>
+
+                    <label>Тематика завершения</label>
+                    <div class="custom-dropdown">
+                        <button type="button" class="dropdown-select-btn" id="completionTheme-btn" onclick="toggleDropdown(event, 'completionTheme-list')">Готово</button>
+                        <input type="hidden" id="completionTheme" value="Готово">
+                        <div class="dropdown-list" id="completionTheme-list">
+                            <div class="dropdown-item" onclick="selectOption('completionTheme', 'Готово', 'completionTheme-btn', 'Готово', 'completionTheme-list')">Готово</div>
+                            <div class="dropdown-item" onclick="selectOption('completionTheme', 'Отказ', 'completionTheme-btn', 'Отказ', 'completionTheme-list')">Отказ</div>
+                            <div class="dropdown-item" onclick="selectOption('completionTheme', 'Перенос', 'completionTheme-btn', 'Перенос', 'completionTheme-list')">Перенос</div>
+                        </div>
+                    </div>
+
+                    <label>Комментарий</label>
+                    <textarea id="comment" rows="3"></textarea>
+
+                    <label style="margin-top: 15px;">Фото отчета (до 10 штук):</label>
+                    <!-- Кнопка загрузки из галереи -->
+                    <label class="file-upload-label" for="photoInput">📂 Загрузить из галереи</label>
+                    <input type="file" id="photoInput" accept="image/*" multiple style="display:none;" onchange="handlePhotoUpload(event, 10)">
+                    
+                    <!-- Кнопка быстрой съемки с камеры (capture="environment") -->
+                    <label class="file-upload-label" for="photoCameraInput" style="background-color: #252525; border-color: var(--beeline-yellow);">📷 Сделать фото</label>
+                    <input type="file" id="photoCameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handlePhotoUpload(event, 10)">
+
+                    <div class="photo-preview-grid" id="photoPreviewContainer"></div>
+                </div>
+
+                <button type="button" class="btn action-btn" onclick="prevStep(4)">⬅️ Назад</button>
+                <button type="submit" class="btn" style="background-color: var(--success); color: white;">💾 Отправить отчет</button>
+            </div>
         </div>
-    </div>
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
-
-        let foundCodes = [];
-        const html5QrCode = new Html5Qrcode("reader");
-        const zxingReader = new ZXing.BrowserMultiFormatReader();
-        let isCameraRunning = false;
-
-        function startCamera() {
-            if (isCameraRunning) return;
+        <!-- ================= ФОРМА ППР (3 ШАГА) ================= -->
+        <div class="ppr-only">
             
-            html5QrCode.start(
-                { facingMode: "environment" },
-                { fps: 15, qrbox: { width: 280, height: 140 } },
-                (text) => {
-                    if (!foundCodes.includes(text)) {
-                        foundCodes.push(text);
-                    }
-                    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-                    stopCameraAndShow();
-                }
-            ).then(() => {
-                isCameraRunning = true;
-            }).catch((err) => {
-                console.log("Ошибка камеры:", err);
+            <!-- ППР ШАГ 1: Данные адреса ППР -->
+            <div class="step active" id="ppr-step-1">
+                <div class="card">
+                    <h3>Данные адреса ППР</h3>
+
+                    <label>Адрес ППР</label>
+                    <input type="text" id="pprAddress" placeholder="просп. Республики 69/1">
+
+                    <label>Логин ППР</label>
+                    <input type="text" id="pprLogin" placeholder="Логин или номер узла">
+
+                    <label>Место проведения ППР (можно выбрать несколько)</label>
+                    <div class="custom-dropdown">
+                        <button type="button" class="dropdown-select-btn" id="pprPlace-btn" onclick="toggleDropdown(event, 'pprPlace-list')">Выберите место (-а)</button>
+                        <input type="hidden" id="pprPlace" value="">
+                        <div class="dropdown-list" id="pprPlace-list">
+                            <label class="dropdown-item-checkbox"><input type="checkbox" value="ТКД" onchange="updateMultiSelect('pprPlace', 'pprPlace-btn', 'pprPlace-list', 'Выберите место (-а)')"> ТКД</label>
+                            <label class="dropdown-item-checkbox"><input type="checkbox" value="Крыша" onchange="updateMultiSelect('pprPlace', 'pprPlace-btn', 'pprPlace-list', 'Выберите место (-а)')"> Крыша</label>
+                            <label class="dropdown-item-checkbox"><input type="checkbox" value="Чердачное помещение" onchange="updateMultiSelect('pprPlace', 'pprPlace-btn', 'pprPlace-list', 'Выберите место (-а)')"> Чердачное помещение</label>
+                            <label class="dropdown-item-checkbox"><input type="checkbox" value="Подъезд" onchange="updateMultiSelect('pprPlace', 'pprPlace-btn', 'pprPlace-list', 'Выберите место (-а)')"> Подъезд</label>
+                            <label class="dropdown-item-checkbox"><input type="checkbox" value="КРТ" onchange="updateMultiSelect('pprPlace', 'pprPlace-btn', 'pprPlace-list', 'Выберите место (-а)')"> КРТ</label>
+                        </div>
+                    </div>
+
+                    <label>Вид производимых работ (можно выбрать несколько)</label>
+                    <div class="custom-dropdown">
+                        <button type="button" class="dropdown-select-btn" id="pprWorkType-btn" onclick="toggleDropdown(event, 'pprWorkType-list')">Выберите вид работ (-ы)</button>
+                        <input type="hidden" id="pprWorkType" value="">
+                        <div class="dropdown-list" id="pprWorkType-list">
+                            <label class="dropdown-item-checkbox"><input type="checkbox" value="Строительство новых плинтов" onchange="updateMultiSelect('pprWorkType', 'pprWorkType-btn', 'pprWorkType-list', 'Выберите вид работ (-ы)')"> Строительство новых плинтов</label>
+                            <label class="dropdown-item-checkbox"><input type="checkbox" value="Замена существующих плинтов" onchange="updateMultiSelect('pprWorkType', 'pprWorkType-btn', 'pprWorkType-list', 'Выберите вид работ (-ы)')"> Замена существующих плинтов</label>
+                            <label class="dropdown-item-checkbox"><input type="checkbox" value="Строительство дополнительных плинтов" onchange="updateMultiSelect('pprWorkType', 'pprWorkType-btn', 'pprWorkType-list', 'Выберите вид работ (-ы)')"> Строительство дополнительных плинтов</label>
+                            <label class="dropdown-item-checkbox"><input type="checkbox" value="Строительство кртм" onchange="updateMultiSelect('pprWorkType', 'pprWorkType-btn', 'pprWorkType-list', 'Выберите вид работ (-ы)')"> Строительство кртм</label>
+                            <label class="dropdown-item-checkbox"><input type="checkbox" value="Замена кртм" onchange="updateMultiSelect('pprWorkType', 'pprWorkType-btn', 'pprWorkType-list', 'Выберите вид работ (-ы)')"> Замена кртм</label>
+                            <label class="dropdown-item-checkbox"><input type="checkbox" value="Строительство дрс" onchange="updateMultiSelect('pprWorkType', 'pprWorkType-btn', 'pprWorkType-list', 'Выберите вид работ (-ы)')"> Строительство дрс</label>
+                            <label class="dropdown-item-checkbox"><input type="checkbox" value="Замена дрс" onchange="updateMultiSelect('pprWorkType', 'pprWorkType-btn', 'pprWorkType-list', 'Выберите вид работ (-ы)')"> Замена дрс</label>
+                        </div>
+                    </div>
+
+                    <label>Подъезд №</label>
+                    <input type="text" id="pprEntrance" placeholder="1">
+                </div>
+                <button type="button" class="btn main-btn" onclick="nextPprStep(1)">Далее ➡️</button>
+            </div>
+
+            <!-- ППР ШАГ 2: Расходные материалы -->
+            <div class="step" id="ppr-step-2">
+                <div class="card">
+                    <h3>Расходные материалы</h3>
+                    
+                    <div class="materials-grid-2">
+                        <div class="field-container">
+                            <label>Номер кабеля</label>
+                            <input type="text" id="pprCableNum" placeholder="9922281">
+                        </div>
+                        <div class="field-container">
+                            <label>Кол-во Кабеля</label>
+                            <input type="number" step="0.1" id="pprCableQty" placeholder="65">
+                        </div>
+                    </div>
+
+                    <div class="materials-grid-3" style="margin-top: 8px;">
+                        <div class="field-container">
+                            <label>Кол-во клипс</label>
+                            <input type="number" id="pprClipsQty" placeholder="45">
+                        </div>
+                        <div class="field-container">
+                            <label>Кол-во коннекторов</label>
+                            <input type="number" id="pprConnectorsQty" placeholder="10">
+                        </div>
+                        <div class="field-container">
+                            <label>Кол-во хомутов</label>
+                            <input type="number" id="pprClampsQty" placeholder="30">
+                        </div>
+                    </div>
+
+                    <div class="materials-grid-2" style="margin-top: 8px;">
+                        <div class="field-container">
+                            <label>Кол-во изоленты</label>
+                            <input type="number" id="pprTapeQty" placeholder="1">
+                        </div>
+                        <div class="field-container">
+                            <label>Дюбель 6*40</label>
+                            <input type="number" id="pprDowels" placeholder="Штук">
+                        </div>
+                    </div>
+
+                    <div class="materials-grid-2" style="margin-top: 8px;">
+                        <div class="field-container">
+                            <label>Кабель канал 40/25</label>
+                            <input type="number" step="0.1" id="pprCc4025" placeholder="Метров">
+                        </div>
+                        <div class="field-container">
+                            <label>Кабель канал 60/40</label>
+                            <input type="number" step="0.1" id="pprCc6040" placeholder="Метров">
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn action-btn" onclick="prevPprStep(2)">⬅️ Назад</button>
+                <button type="button" class="btn main-btn" onclick="nextPprStep(2)">Далее ➡️</button>
+            </div>
+
+            <!-- ППР ШАГ 3: Завершение отчета -->
+            <div class="step" id="ppr-step-3">
+                <div class="card">
+                    <h3>Завершение отчета</h3>
+
+                    <label>ФИО Монтажника 1</label>
+                    <div class="custom-dropdown">
+                        <button type="button" class="dropdown-select-btn" id="pprInstaller1-btn" onclick="toggleDropdown(event, 'pprInstaller1-list')">Выберите монтажника 1</button>
+                        <input type="hidden" id="pprInstaller1">
+                        <div class="dropdown-list" id="pprInstaller1-list"></div>
+                    </div>
+
+                    <label>Часовая ставка 1 монтажника</label>
+                    <input type="number" step="0.1" id="pprRate1" placeholder="0">
+
+                    <label style="margin-top: 15px;">ФИО Монтажника 2</label>
+                    <div class="custom-dropdown">
+                        <button type="button" class="dropdown-select-btn" id="pprInstaller2-btn" onclick="toggleDropdown(event, 'pprInstaller2-list')">Выберите монтажника 2</button>
+                        <input type="hidden" id="pprInstaller2">
+                        <div class="dropdown-list" id="pprInstaller2-list"></div>
+                    </div>
+
+                    <label>Часовая ставка 2 монтажника</label>
+                    <input type="number" step="0.1" id="pprRate2" placeholder="0">
+
+                    <label style="margin-top: 15px;">Комментарий</label>
+                    <textarea id="pprComment" rows="3"></textarea>
+
+                    <!-- Фото До ППР -->
+                    <label style="margin-top: 15px;">До ППР (до 20 штук):</label>
+                    <label class="file-upload-label" for="pprPhotoBeforeInput">📂 Загрузить ДО из галереи</label>
+                    <input type="file" id="pprPhotoBeforeInput" accept="image/*" multiple style="display:none;" onchange="handlePprPhotoUpload(event, 'before', 20)">
+                    <label class="file-upload-label" for="pprPhotoBeforeCameraInput" style="background-color: #252525; border-color: var(--beeline-yellow);">📷 Сделать фото ДО</label>
+                    <input type="file" id="pprPhotoBeforeCameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handlePprPhotoUpload(event, 'before', 20)">
+                    <div class="photo-preview-grid" id="pprPhotoBeforeContainer"></div>
+
+                    <!-- Фото После ППР -->
+                    <label style="margin-top: 15px;">После ППР (до 20 штук):</label>
+                    <label class="file-upload-label" for="pprPhotoAfterInput">📂 Загрузить ПОСЛЕ из галереи</label>
+                    <input type="file" id="pprPhotoAfterInput" accept="image/*" multiple style="display:none;" onchange="handlePprPhotoUpload(event, 'after', 20)">
+                    <label class="file-upload-label" for="pprPhotoAfterCameraInput" style="background-color: #252525; border-color: var(--beeline-yellow);">📷 Сделать фото ПОСЛЕ</label>
+                    <input type="file" id="pprPhotoAfterCameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handlePprPhotoUpload(event, 'after', 20)">
+                    <div class="photo-preview-grid" id="pprPhotoAfterContainer"></div>
+                </div>
+
+                <button type="button" class="btn action-btn" onclick="prevPprStep(3)">⬅️ Назад</button>
+                <button type="submit" class="btn" style="background-color: var(--success); color: white;">💾 Отправить отчет ППР</button>
+            </div>
+
+        </div>
+
+    </form>
+</div>
+
+<!-- ОКНО СКАНЕРА КАМЕРА (ШТРИХ-КОДОВ) -->
+<div id="scanner-modal">
+    <div style="width:100%; max-width:350px; display:flex; justify-content:space-between; margin-bottom: 10px;">
+        <span style="color:var(--beeline-yellow); font-weight:bold;">Сканирование штрих-кода</span>
+        <button type="button" onclick="closeScanner()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕ Закрыть</button>
+    </div>
+    <div id="reader"></div>
+</div>
+
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+
+    document.getElementById('reportDate').valueAsDate = new Date();
+
+    let currentStep = 1;
+    let currentPprStep = 1;
+    let photosList = [];
+    let pprPhotosBefore = [];
+    let pprPhotosAfter = [];
+    let activeInputId = null;
+    let html5QrCode = null;
+
+    const installersList = [
+        "Курмангалиев Тимур Берикович,Бригада №1 (Темиртау)",
+        "Стрижко Дмитрий Юрьевич,Бригада №3 (Темиртау)",
+        "Новиков Иван Викторович,Бригада №4 (Темиртау)",
+        "Лоос Виктор Геннадьевич,Бригада №5 (Темиртау)",
+        "Марчуков Андрей Артемович,Бригада №6 (Темиртау)",
+        "Иванусь Аркадий Александрович,Бригада №7 (Темиртау)",
+        "Павленко Николай Александрович,Бригада №8 (Темиртау)",
+        "Седухин Владимир Игоревич,Бригада №9 (Темиртау)",
+        "Янковицкий Сергей Валерьевич,Бригада №10 (Темиртау)",
+        "Тарыца Захар Васильевич,Бригада №11 (Темиртау)",
+        "Кайзер Павел Иванович,Бригада №12 (Темиртау)"
+    ];
+
+    const standardRouterModels = [
+        "TP-Link EX222 (AX-1800)",
+        "ZXHN H3601P V7 (ZTE Router)",
+        "TP Link EC225-G5 (AC-1300)",
+        "AC1200 - G12-B",
+        "Basic (Модель F1O-D)",
+        "TP-Link Archer C20",
+        "TP-Link Archer C24",
+        "TP-Link HC220-G5 (Ultimate White)",
+        "AX3000 (Ultimate Black)",
+        "TP-Link DEKO M4 (Ultimate)",
+        "Роутер абонента"
+    ];
+
+    const demontazhRouterModels = [
+        "TP-Link EX222 (AX-1800)",
+        "ZXHN H3601P V7 (ZTE Router)",
+        "TP Link EC225-G5 (AC-1300)",
+        "AC1200 - G12-B",
+        "Basic (Модель F1O-D)",
+        "TURBO",
+        "TP-Link Archer C20",
+        "TP-Link Archer C24",
+        "DGP X3000TR (GPON)",
+        "TP-Link HC220-G5 (Ultimate White)",
+        "AX3000 (Ultimate Black)",
+        "TP-Link DEKO M4 (Ultimate)",
+        "TP-Link WR840N",
+        "D-Link Dir 615",
+        "Роутер абонента"
+    ];
+
+    const standardTvBoxes = [
+        "Приставка IPTV ZXV10 B860H",
+        "Без приставки"
+    ];
+
+    const demontazhTvBoxes = [
+        "Приставка IPTV ZXV10 B860H",
+        "RASSE-001",
+        "Без приставки"
+    ];
+
+    function initInstallersDropdowns() {
+        const list1 = document.getElementById('installer-list');
+        if (list1) {
+            let html = '';
+            installersList.forEach(item => {
+                const shortName = item.split(',')[0];
+                html += `<div class="dropdown-item" onclick="selectOption('installerName', '${item}', 'installer-btn', '${shortName}', 'installer-list')">${shortName}</div>`;
             });
+            list1.innerHTML = html;
+        }
+        updatePprInstallersLists();
+    }
+
+    function updatePprInstallersLists() {
+        const val1 = document.getElementById('pprInstaller1').value;
+        const val2 = document.getElementById('pprInstaller2').value;
+
+        const list1 = document.getElementById('pprInstaller1-list');
+        const list2 = document.getElementById('pprInstaller2-list');
+
+        if (list1) {
+            let html1 = '';
+            installersList.forEach(item => {
+                if (item !== val2) {
+                    const shortName = item.split(',')[0];
+                    html1 += `<div class="dropdown-item" onclick="selectOption('pprInstaller1', '${item}', 'pprInstaller1-btn', '${shortName}', 'pprInstaller1-list'); updatePprInstallersLists();">${shortName}</div>`;
+                }
+            });
+            list1.innerHTML = html1;
         }
 
-        function stopCameraAndShow() {
-            if (isCameraRunning) {
-                html5QrCode.stop().then(() => {
-                    isCameraRunning = false;
-                    showSuccess();
-                }).catch(() => {
-                    isCameraRunning = false;
-                    showSuccess();
-                });
+        if (list2) {
+            let html2 = '';
+            installersList.forEach(item => {
+                if (item !== val1) {
+                    const shortName = item.split(',')[0];
+                    html2 += `<div class="dropdown-item" onclick="selectOption('pprInstaller2', '${item}', 'pprInstaller2-btn', '${shortName}', 'pprInstaller2-list'); updatePprInstallersLists();">${shortName}</div>`;
+                }
+            });
+            list2.innerHTML = html2;
+        }
+    }
+
+    function initEquipmentDropdowns() {
+        const type = document.getElementById('reportType').value;
+        const isDemontazh = type.includes('Демонтаж');
+
+        const routerList = isDemontazh ? demontazhRouterModels : standardRouterModels;
+        const tvList = isDemontazh ? demontazhTvBoxes : standardTvBoxes;
+        
+        ['r1', 'r2', 'r3'].forEach(prefix => {
+            const listContainer = document.getElementById(`${prefix}Model-list`);
+            if (!listContainer) return;
+            
+            let html = '';
+            routerList.forEach(model => {
+                html += `<div class="dropdown-item" onclick="selectOption('${prefix}Model', '${model}', '${prefix}Model-btn', '${model}', '${prefix}Model-list')">${model}</div>`;
+            });
+            listContainer.innerHTML = html;
+
+            if (prefix === 'r1') {
+                document.getElementById(`${prefix}Model`).value = "TP-Link EX222 (AX-1800)";
+                document.getElementById(`${prefix}Model-btn`).textContent = "TP-Link EX222 (AX-1800)";
             } else {
-                showSuccess();
+                document.getElementById(`${prefix}Model`).value = "Роутер абонента";
+                document.getElementById(`${prefix}Model-btn`).textContent = "Роутер абонента";
             }
-        }
+        });
 
-        startCamera();
-
-        async function handleFile(e) {
-            if (e.target.files && e.target.files.length > 0) {
-                const file = e.target.files[0];
-                
-                if (isCameraRunning) {
-                    try { 
-                        await html5QrCode.stop(); 
-                        isCameraRunning = false;
-                    } catch(e) {}
-                }
-
-                const reader = new FileReader();
-                reader.onload = async function (event) {
-                    const img = new Image();
-                    img.onload = async function () {
-                        const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 1600;
-                        const scaleSize = MAX_WIDTH / img.width;
-                        canvas.width = MAX_WIDTH;
-                        canvas.height = img.height * (scaleSize < 1 ? scaleSize : 1);
-                        
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        
-                        const imageUrl = canvas.toDataURL('image/jpeg', 0.95);
-
-                        try {
-                            const results = await zxingReader.decodeFromImageUrl(imageUrl);
-                            if (results) {
-                                const items = Array.isArray(results) ? results : [results];
-                                foundCodes = [];
-                                items.forEach(item => {
-                                    if (!foundCodes.includes(item.text)) {
-                                        foundCodes.push(item.text);
-                                    }
-                                });
-
-                                if (foundCodes.length > 0) {
-                                    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-                                    showSuccess();
-                                    return;
-                                }
-                            }
-                            throw new Error();
-                        } catch (err) {
-                            alert("Штрих-коды не найдены на фото. Сделайте снимок ближе к наклейке.");
-                            resetScanner();
-                        }
-                    };
-                    img.src = event.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function showSuccess() {
-            document.getElementById('scanner-container').style.display = 'none';
+        ['tv1', 'tv2', 'tv3'].forEach(prefix => {
+            const listContainer = document.getElementById(`${prefix}Model-list`);
+            if (!listContainer) return;
             
-            const listContainer = document.getElementById('result-list');
-            listContainer.innerHTML = '';
-            
-            foundCodes.forEach((code) => {
-                const div = document.createElement('div');
-                div.className = 'code-item';
-                div.textContent = code; // Выводится только сам код без лишних подписей
-                listContainer.appendChild(div);
+            let html = '';
+            tvList.forEach(model => {
+                html += `<div class="dropdown-item" onclick="selectOption('${prefix}Model', '${model}', '${prefix}Model-btn', '${model}', '${prefix}Model-list')">${model}</div>`;
             });
+            listContainer.innerHTML = html;
 
-            document.getElementById('success-container').style.display = 'flex';
+            document.getElementById(`${prefix}Model`).value = "Без приставки";
+            document.getElementById(`${prefix}Model-btn`).textContent = "Без приставки";
+        });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        initEquipmentDropdowns();
+        initInstallersDropdowns();
+    });
+
+    function toggleAccordion(headerElement) {
+        const item = headerElement.parentElement;
+        item.classList.toggle('open');
+    }
+
+    function toggleDropdown(event, listId) {
+        event.stopPropagation();
+        const list = document.getElementById(listId);
+        const isOpen = list.classList.contains('open');
+        
+        document.querySelectorAll('.dropdown-list').forEach(el => el.classList.remove('open'));
+        
+        if (!isOpen) {
+            list.classList.add('open');
+        }
+    }
+
+    function selectOption(hiddenInputId, value, btnId, displayText, listId) {
+        document.getElementById(hiddenInputId).value = value;
+        document.getElementById(btnId).textContent = displayText;
+        document.getElementById(listId).classList.remove('open');
+    }
+
+    function updateMultiSelect(hiddenInputId, btnId, listId, defaultText) {
+        const list = document.getElementById(listId);
+        const checkboxes = list.querySelectorAll('input[type="checkbox"]');
+        const selected = [];
+        
+        checkboxes.forEach(cb => {
+            if (cb.checked) selected.push(cb.value);
+        });
+
+        const hiddenInput = document.getElementById(hiddenInputId);
+        const btn = document.getElementById(btnId);
+
+        if (selected.length > 0) {
+            hiddenInput.value = selected.join(', ');
+            btn.textContent = selected.join(', ');
+        } else {
+            hiddenInput.value = '';
+            btn.textContent = defaultText;
+        }
+    }
+
+    window.addEventListener('click', function(e) {
+        if (!e.target.closest('.custom-dropdown')) {
+            document.querySelectorAll('.dropdown-list').forEach(el => el.classList.remove('open'));
+        }
+    });
+
+    function handleReportTypeChange() {
+        const type = document.getElementById('reportType').value;
+        const standardBlock = document.querySelector('.standard-report-block');
+        const pprBlock = document.querySelector('.ppr-only');
+        const gponOnlyBlock = document.querySelector('.gpon-only');
+        const dateLabel = document.getElementById('dateLabel');
+
+        if (type.includes("ППР")) {
+            standardBlock.style.display = 'none';
+            pprBlock.style.display = 'block';
+            dateLabel.textContent = "Дата ППР:";
+            showPprStep(1);
+            return;
         }
 
-        function resetScanner() {
-            foundCodes = [];
-            document.getElementById('success-container').style.display = 'none';
-            document.getElementById('scanner-container').style.display = 'flex';
-            document.getElementById('file-input').value = '';
-            startCamera();
+        pprBlock.style.display = 'none';
+        standardBlock.style.display = 'block';
+        dateLabel.textContent = "Дата монтажа:";
+
+        if (type.includes("GPON") && !type.includes("Демонтаж")) {
+            gponOnlyBlock.style.display = 'block';
+        } else {
+            gponOnlyBlock.style.display = 'none';
         }
 
-        function copyAllCodes() {
-            const combinedText = foundCodes.join('\n');
-            navigator.clipboard.writeText(combinedText).catch(() => {});
-            if (tg.sendData) {
-                tg.sendData(combinedText);
+        initEquipmentDropdowns();
+        showStep(1);
+    }
+
+    function shouldSkipEquipment() {
+        const type = document.getElementById('reportType').value;
+        return type.includes("Переезд");
+    }
+
+    function showStep(step) {
+        document.querySelectorAll('.standard-report-block .step').forEach(el => el.classList.remove('active'));
+        
+        if (shouldSkipEquipment()) {
+            if (step === 3) {
+                step = (currentStep === 2) ? 4 : 2;
             }
-            setTimeout(() => {
-                tg.close();
-            }, 100);
         }
-    </script>
+
+        if (step === 1) document.getElementById('step-client').classList.add('active');
+        if (step === 2) document.getElementById('step-materials').classList.add('active');
+        if (step === 3) document.getElementById('step-equipment').classList.add('active');
+        if (step === 4) document.getElementById('step-finish').classList.add('active');
+        
+        currentStep = step;
+        window.scrollTo(0, 0);
+    }
+
+    function nextStep(fromStep) {
+        showStep(fromStep + 1);
+    }
+
+    function prevStep(fromStep) {
+        showStep(fromStep - 1);
+    }
+
+    function showPprStep(step) {
+        document.querySelectorAll('.ppr-only .step').forEach(el => el.classList.remove('active'));
+        document.getElementById(`ppr-step-${step}`).classList.add('active');
+        currentPprStep = step;
+        window.scrollTo(0, 0);
+    }
+
+    function nextPprStep(fromStep) {
+        showPprStep(fromStep + 1);
+    }
+
+    function prevPprStep(fromStep) {
+        showPprStep(fromStep - 1);
+    }
+
+    function openScanner(inputId) {
+        activeInputId = inputId;
+        document.getElementById('scanner-modal').style.display = 'flex';
+        
+        if (!html5QrCode) {
+            html5QrCode = new Html5Qrcode("reader");
+        }
+
+        html5QrCode.start(
+            { facingMode: "environment" },
+            { fps: 20, qrbox: { width: 260, height: 130 } },
+            (decodedText) => {
+                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                document.getElementById(activeInputId).value = decodedText;
+                closeScanner();
+            },
+            (errorMessage) => {}
+        ).catch(err => {
+            alert("Не удалось запустить камеру: проверьте разрешения.");
+            closeScanner();
+        });
+    }
+
+    function closeScanner() {
+        if (html5QrCode && html5QrCode.isScanning) {
+            html5QrCode.stop().then(() => {
+                document.getElementById('scanner-modal').style.display = 'none';
+            }).catch(() => {
+                document.getElementById('scanner-modal').style.display = 'none';
+            });
+        } else {
+            document.getElementById('scanner-modal').style.display = 'none';
+        }
+    }
+
+    function handlePhotoUpload(event, limit) {
+        const files = Array.from(event.target.files);
+        files.forEach(file => {
+            if (photosList.length < limit) photosList.push(file);
+        });
+        renderPhotos();
+        event.target.value = ''; 
+    }
+
+    function removePhoto(index) {
+        photosList.splice(index, 1);
+        renderPhotos();
+    }
+
+    function renderPhotos() {
+        const container = document.getElementById('photoPreviewContainer');
+        container.innerHTML = '';
+        photosList.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const div = document.createElement('div');
+                div.className = 'photo-thumb';
+                div.innerHTML = `
+                    <img src="${e.target.result}">
+                    <button type="button" class="delete-btn" onclick="removePhoto(${index})">✕</button>
+                `;
+                container.appendChild(div);
+            }
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function handlePprPhotoUpload(event, type, limit) {
+        const files = Array.from(event.target.files);
+        files.forEach(file => {
+            if (type === 'before' && pprPhotosBefore.length < limit) pprPhotosBefore.push(file);
+            if (type === 'after' && pprPhotosAfter.length < limit) pprPhotosAfter.push(file);
+        });
+        renderPprPhotos(type);
+        event.target.value = '';
+    }
+
+    function removePprPhoto(index, type) {
+        if (type === 'before') pprPhotosBefore.splice(index, 1);
+        if (type === 'after') pprPhotosAfter.splice(index, 1);
+        renderPprPhotos(type);
+    }
+
+    function renderPprPhotos(type) {
+        const containerId = type === 'before' ? 'pprPhotoBeforeContainer' : 'pprPhotoAfterContainer';
+        const list = type === 'before' ? pprPhotosBefore : pprPhotosAfter;
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        
+        list.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const div = document.createElement('div');
+                div.className = 'photo-thumb';
+                div.innerHTML = `
+                    <img src="${e.target.result}">
+                    <button type="button" class="delete-btn" onclick="removePprPhoto(${index}, '${type}')">✕</button>
+                `;
+                container.appendChild(div);
+            }
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function submitReport(e) {
+        e.preventDefault();
+        const type = document.getElementById('reportType').value;
+        if (type.includes("ППР")) {
+            const m1 = document.getElementById('pprInstaller1').value;
+            const m2 = document.getElementById('pprInstaller2').value;
+            if (!m1 || !m2) {
+                alert("Пожалуйста, выберите обоих монтажников для ППР!");
+                return;
+            }
+            alert("Отчет ППР успешно подготовлен к отправке!");
+        } else {
+            const installer = document.getElementById('installerName').value;
+            if (!installer) {
+                alert("Пожалуйста, выберите монтажника!");
+                return;
+            }
+            alert("Отчет успешно подготовлен к отправке! Монтажник: " + installer);
+        }
+    }
+</script>
+
 </body>
 </html>
