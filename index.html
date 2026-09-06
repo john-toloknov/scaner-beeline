@@ -1020,6 +1020,9 @@
 </div>
 
 <script>
+    // URL вашего развертывания Google Apps Script
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxINc6eOKp6cNkGxpPMj58WCSJSD6CpPxaSUo59Z2woVx4sMXK8UfDjLqOKuh-G07JBaw/exec";
+
     const tg = window.Telegram.WebApp;
     tg.ready();
     tg.expand();
@@ -1410,9 +1413,12 @@
         });
     }
 
-    function submitReport(e) {
+    // Интегрированная функция отправки данных в Google Таблицу
+    async function submitReport(e) {
         e.preventDefault();
+        
         const type = document.getElementById('reportType').value;
+        
         if (type.includes("ППР")) {
             const m1 = document.getElementById('pprInstaller1').value;
             const m2 = document.getElementById('pprInstaller2').value;
@@ -1420,14 +1426,98 @@
                 alert("Пожалуйста, выберите обоих монтажников для ППР!");
                 return;
             }
-            alert("Отчет ППР успешно подготовлен к отправке!");
         } else {
             const installer = document.getElementById('installerName').value;
             if (!installer) {
                 alert("Пожалуйста, выберите монтажника!");
                 return;
             }
-            alert("Отчет успешно подготовлен к отправке! Монтажник: " + installer);
+        }
+
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = "⏳ Отправка...";
+        submitBtn.disabled = true;
+
+        try {
+            const params = new URLSearchParams();
+            params.append("type", type);
+
+            if (type.includes("ППР")) {
+                params.append("valA", document.getElementById('pprLogin').value || document.getElementById('pprAddress').value);
+                params.append("valB", document.getElementById('pprAddress').value);
+                params.append("valC", "Подъезд: " + document.getElementById('pprEntrance').value);
+                params.append("valD", "Место: " + document.getElementById('pprPlace').value);
+                params.append("valF", document.getElementById('pprCableNum').value);
+                params.append("valG", document.getElementById('pprCableQty').value);
+                params.append("valH", document.getElementById('pprComment').value);
+                params.append("valJ", document.getElementById('pprClipsQty').value);
+                params.append("valK", document.getElementById('pprConnectorsQty').value);
+                params.append("valL", document.getElementById('pprClampsQty').value);
+                params.append("valM", document.getElementById('pprTapeQty').value);
+                params.append("valO", "Вид работ: " + document.getElementById('pprWorkType').value);
+                
+                let installersStr = "Монтажники: " + document.getElementById('pprInstaller1').value;
+                if (document.getElementById('pprInstaller2').value) {
+                    installersStr += ", " + document.getElementById('pprInstaller2').value;
+                }
+                params.append("valAG", installersStr);
+
+            } else {
+                params.append("valA", document.getElementById('appNumber').value);
+                params.append("valB", document.getElementById('address').value);
+                params.append("valC", document.getElementById('clientName').value);
+                params.append("valD", document.getElementById('login').value);
+                
+                params.append("valF", document.getElementById('cableNum').value);
+                params.append("valG", document.getElementById('cableQty').value);
+                params.append("valH", document.getElementById('patchCableNum').value);
+                params.append("valI", document.getElementById('patchCableQty').value);
+                params.append("valJ", document.getElementById('clipsQty').value);
+                params.append("valK", document.getElementById('connectorsQty').value);
+                params.append("valL", document.getElementById('clampsQty').value);
+                params.append("valM", document.getElementById('tapeQty').value);
+                params.append("valN", document.getElementById('uy2Qty').value);
+                params.append("valO", document.getElementById('pullMethod').value);
+
+                params.append("valQ", document.getElementById('r1Model').value);
+                params.append("valR", document.getElementById('r1Sn').value);
+                params.append("valS", document.getElementById('r1Mac').value);
+                params.append("valT", document.getElementById('r2Model').value);
+                params.append("valU", document.getElementById('r2Sn').value);
+                params.append("valV", document.getElementById('r2Mac').value);
+                params.append("valW", document.getElementById('r3Model').value);
+                params.append("valX", document.getElementById('r3Sn').value);
+                params.append("valY", document.getElementById('r3Mac').value);
+
+                params.append("valZ", document.getElementById('tv1Model').value);
+                params.append("valAA", document.getElementById('tv1Sn').value);
+                params.append("valAB", document.getElementById('tv1Mac').value);
+                params.append("valAC", document.getElementById('tv2Model').value);
+                params.append("valAD", document.getElementById('tv2Sn').value);
+                params.append("valAE", document.getElementById('tv2Mac').value);
+
+                params.append("valAI", document.getElementById('comment').value);
+                params.append("valAG", "Монтажник: " + document.getElementById('installerName').value);
+            }
+
+            await fetch(`${SCRIPT_URL}?${params.toString()}`, {
+                method: "GET",
+                mode: "no-cors"
+            });
+
+            alert("✅ Отчет успешно отправлен в Google Таблицу!");
+            
+            if (tg && tg.close) {
+                tg.close();
+            }
+
+        } catch (error) {
+            console.error(error);
+            alert("❌ Ошибка при отправке отчета: " + error.message);
+        } finally {
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
         }
     }
 </script>
