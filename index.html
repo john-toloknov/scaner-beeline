@@ -828,14 +828,13 @@
                         <div class="dropdown-list" id="installer-list"></div>
                     </div>
 
+                    <!-- ПОИСК И ВЫБОР ТЕМАТИКИ ЗАВЕРШЕНИЯ -->
                     <label>Тематика завершения</label>
-                    <div class="custom-dropdown">
-                        <button type="button" class="dropdown-select-btn" id="completionTheme-btn" onclick="toggleDropdown(event, 'completionTheme-list')">Готово</button>
-                        <input type="hidden" id="completionTheme" value="Готово">
-                        <div class="dropdown-list" id="completionTheme-list">
-                            <div class="dropdown-item" onclick="selectOption('completionTheme', 'Готово', 'completionTheme-btn', 'Готово', 'completionTheme-list')">Готово</div>
-                            <div class="dropdown-item" onclick="selectOption('completionTheme', 'Отказ', 'completionTheme-btn', 'Отказ', 'completionTheme-list')">Отказ</div>
-                            <div class="dropdown-item" onclick="selectOption('completionTheme', 'Перенос', 'completionTheme-btn', 'Перенос', 'completionTheme-list')">Перенос</div>
+                    <div class="custom-dropdown" id="theme-dropdown-container">
+                        <input type="text" id="themeSearchInput" placeholder="🔍 Введите для поиска тематики..." autocomplete="off" oninput="filterThemes()" onclick="openThemeDropdown(event)" style="cursor: pointer;">
+                        <input type="hidden" id="completionTheme" value="">
+                        <div class="dropdown-list" id="completionTheme-list" style="max-height: 250px;">
+                            <!-- Сюда динамически рендерятся тематики -->
                         </div>
                     </div>
 
@@ -866,7 +865,7 @@
                     <input type="text" id="pprAddress" placeholder="просп. Республики 69/1">
 
                     <label>Логин ППР</label>
-                    <input type="text" id="pprLogin" placeholder="Логин или номер узла">
+                    <input type="text" id="pprLogin" placeholder="0011998877">
 
                     <label>Место проведения ППР (можно выбрать несколько)</label>
                     <div class="custom-dropdown">
@@ -1017,7 +1016,7 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyXWm0Vztrg_EwkBWzwKS1VazHU-31y8jugIyuPd5vjhFPUj8ebmiJoZ-qLRX8aek7W0g/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxINc6eOKp6cNkGxpPMj58WCSJSD6CpPxaSUo59Z2woVx4sMXK8UfDjLqOKuh-G07JBaw/exec";
 
     const tg = window.Telegram.WebApp;
     tg.ready();
@@ -1090,6 +1089,120 @@
         "RASSE-001",
         "Без приставки"
     ];
+
+    // ПУЛЫ ТЕМАТИК ПО ТИПАМ ОТЧЕТОВ
+    const themesService = [
+        "Замена коннектора на ТКД", "Перенос выезда по запросу клиента", "Выход из строя коммутатора ТКД",
+        "Настройка Wi-Fi роутера Basic", "STB предоставлена", "Замена порта на КРТ",
+        "Замена коннектора в квартире абонента", "Перегружен магистральный канал", "Проблемы с доступом",
+        "Предоставление Ultimate роутера", "Проблема на стороне абонентского оборудования", "Замена Wi-Fi роутера Ultimate",
+        "Замена кабеля от КРТ", "Сервис отработан удалённо", "Выход из строя коммутатора АГУ",
+        "Подключение активного клиента к порту", "Ошибка инициатора- другое", "Диверсия/саботаж/вредительство",
+        "Настройка Wi-Fi роутера Ultimate", "Настройка приложения на Smart TV", "Замена Wi-Fi роутера Basic",
+        "Предоставление Econom роутера", "HDMI кабель предоставлен", "Перегрузки на сети FTTB",
+        "Проблема на стороне внешнего провайдера", "Электропитание ТКД", "Самоустранение по приезду МБ",
+        "SWAP TV приставок", "Соединение кабеля вне квартиры Абонента", "Проблемы с биллингом",
+        "Зависание ТКД", "Ошибка конфигурации АГУ/ТКД", "Отказ от сервиса",
+        "Прошивка Wi-Fi роутера Econom", "Предоставление Basic роутера", "Самоустранение по звонку",
+        "Абонент переподключен", "Электропитание АГУ", "Подключение Smart TV", "Влияние ТТ/ГП",
+        "Восстановление соединения на КРТ", "Кража оборудования", "Замена STB", "Замена кабеля от ТКД",
+        "Ошибка инициатора- неверные данные", "Блок питания предоставлен", "Отказ от сим-карты",
+        "Отключение клиента от порта", "Решен ГЭСПД", "Клиента нет дома", "Плановые и аварийные работы на сети Кар-Тел",
+        "Прошивка Wi-Fi роутера Basic", "Зависание АГУ", "Настройка STB", "SWAP Эконом бесплатно",
+        "Зависание каналов", "Пульт предоставлен", "Слабый пользователь", "Настройка Wi-Fi роутера Econom",
+        "Отключение электропитания на сети (работы ГЭС/РЭС/КСК/АЖК и т.д.)", "Замена порта ТКД",
+        "Ошибка инициатора- неполная диагностика", "Соединение/замена кабеля в квартире абонента", "Недозвон",
+        "Патчкорд предоставлен", "Замена Wi-Fi роутера Econom", "Сим-карты предоставлены", "Выбор другого оператора",
+        "Выезд на длительный срок", "КСК не дают ключей. Нет доступа к оборудованию",
+        "по вине монтажников, не приехали, не позвонили", "Требование клиента особых условий подключения, при прокладке кабеля",
+        "Ошибка при создании заявки - адрес", "Ошибка при создании заявки - Тарифный план (наполнение, цена, пакет)",
+        "Ошибка при создании заявки - некорректная консультация", "Ошибка при создании заявки - не подавали заявку",
+        "Долгое ожидание включения", "Контрактный ТП другого провайдера",
+        "Нет тех.возможности (нет свободных портов ТКД / Требуется установка допсвича)", "Нет тех.возможности (Нет ДРС)",
+        "Нет тех.возможности (установка допплинтов / расширение (ДРС))", "Нет технической возможности ( долгое ожидание из за доп оборудования, выбор др оператора)",
+        "Нет технической возможности (Забиты закладные трубки в кв. от застройщиков)", "Финансовые затруднения (Клиент не готов к оплате АП)",
+        "Финансовые затруднения (Дорого в сравнение с конкурентами)", "Дубликат по активной заявке", "Требуется переезд",
+        "Действующий клиент", "Отказ от прохождения биометрии", "Видеокамера настроена", "Видеокамера заменена",
+        "Настройка Wi-Fi роутера ONT", "Массовый перевод по CRQ", "Предоставление ONT роутера",
+        "Видеокамера демонтирована", "Подключение видеокамеры", "Демонтаж ONT", "Демонтаж Wi-Fi роутера в ОПИО",
+        "Замена Wi-Fi роутера ONT", "Прошика Wi-Fi роутера ONT", "Демонтаж Wi-Fi + STB в ОПИО", "Замена порта на ОРК",
+        "Демонтаж STB в ОПИО", "Замена оптического патчкорда в квартире", "Замена оптического патчкорда в подъезде", "Повреждение ОК"
+    ];
+
+    const themesDemontazh = [
+        "STB демонтирован", "Роутер демонтирован", "STB+Wi-Fi роутер демонтированы", "Отказ от демонтажа/возврата"
+    ];
+
+    const themesPereezd = [
+        "Переезд абонента завершен", "Отказ от сервиса"
+    ];
+
+    const themesVkljuchenie = [
+        "Подключение B2C клиента", "Подключение B2B клиента", "Выбор другого оператора", "Выезд на длительный срок",
+        "КСК не дают ключей. Нет доступа к оборудованию", "по вине монтажников, не приехали, не позвонили",
+        "Требование клиента особых условий подключения, при прокладке кабеля", "Ошибка при создании заявки - адрес",
+        "Ошибка при создании заявки - Тарифный план (наполнение, цена, пакет)", "Ошибка при создании заявки - некорректная консультация",
+        "Ошибка при создании заявки - не подавали заявку", "Долгое ожидание включения", "Контрактный ТП другого провайдера",
+        "Нет тех.возможности (нет свободных портов ТКД / Требуется установка допсвича)", "Нет тех.возможности (Нет ДРС)",
+        "Нет тех.возможности (установка допплинтов / расширение (ДРС))", "Нет технической возможности ( долгое ожидание из за доп оборудования, выбор др оператора)",
+        "Нет технической возможности (Забиты закладные трубки в кв. от застройщиков)", "Ошибка СУЗ (Проблема с активацией)",
+        "Ошибка СУЗ (При сборе Тарифа)", "Финансовые затруднения (Клиент не готов к оплате АП)",
+        "Финансовые затруднения (Дорого в сравнение с конкурентами)", "Дубликат по активной заявке", "Требуется переезд",
+        "Действующий клиент", "Отказ от прохождения биометрии", "День X"
+    ];
+
+    function getActiveThemesList() {
+        const type = document.getElementById('reportType').value;
+        if (type.includes('Демонтаж')) return themesDemontazh;
+        if (type.includes('Переезд')) return themesPereezd;
+        if (type.includes('Включение')) return themesVkljuchenie;
+        if (type.includes('Сервис')) return themesService;
+        return themesService;
+    }
+
+    function renderThemesList(filter = '') {
+        const listContainer = document.getElementById('completionTheme-list');
+        const currentList = getActiveThemesList();
+        
+        const filtered = currentList.filter(item => 
+            item.toLowerCase().includes(filter.toLowerCase())
+        );
+
+        let html = '';
+        if (filtered.length === 0) {
+            html = `<div class="dropdown-item" style="color: var(--text-secondary); cursor: default;">Ничего не найдено</div>`;
+        } else {
+            filtered.forEach(theme => {
+                // Экранируем кавычки для безопасности в JS-строке
+                const safeTheme = theme.replace(/'/g, "\\'");
+                html += `<div class="dropdown-item" onclick="selectTheme('${safeTheme}')">${theme}</div>`;
+            });
+        }
+        listContainer.innerHTML = html;
+    }
+
+    function openThemeDropdown(event) {
+        event.stopPropagation();
+        document.querySelectorAll('.dropdown-list').forEach(el => {
+            if (el.id !== 'completionTheme-list') el.classList.remove('open');
+        });
+        document.getElementById('completionTheme-list').classList.add('open');
+        renderThemesList(document.getElementById('themeSearchInput').value);
+    }
+
+    function filterThemes() {
+        const query = document.getElementById('themeSearchInput').value;
+        // Если пользователь начал писать, сбрасываем скрытое значение, пока не выберет конкретное
+        document.getElementById('completionTheme').value = query;
+        document.getElementById('completionTheme-list').classList.add('open');
+        renderThemesList(query);
+    }
+
+    function selectTheme(themeName) {
+        document.getElementById('completionTheme').value = themeName;
+        document.getElementById('themeSearchInput').value = themeName;
+        document.getElementById('completionTheme-list').classList.remove('open');
+    }
 
     function initInstallersDropdowns() {
         const list1 = document.getElementById('installer-list');
@@ -1179,6 +1292,12 @@
         initEquipmentDropdowns();
         initInstallersDropdowns();
         handleReportTypeChange();
+        // Установим дефолтное значение первой тематики для текущего отчета
+        const defaultThemes = getActiveThemesList();
+        if (defaultThemes.length > 0) {
+            document.getElementById('themeSearchInput').value = defaultThemes[0];
+            document.getElementById('completionTheme').value = defaultThemes[0];
+        }
     });
 
     function toggleAccordion(headerElement) {
@@ -1256,6 +1375,13 @@
             gponOnlyBlock.style.display = 'none';
         }
 
+        // Обновляем список тематик при смене типа отчета и подставляем первый вариант по умолчанию
+        const currentThemes = getActiveThemesList();
+        if (currentThemes.length > 0) {
+            document.getElementById('themeSearchInput').value = currentThemes[0];
+            document.getElementById('completionTheme').value = currentThemes[0];
+        }
+
         initEquipmentDropdowns();
         showStep(1);
     }
@@ -1268,10 +1394,6 @@
         return document.getElementById('reportType').value.includes("Переезд");
     }
 
-    // Карта шагов для каждого типа отчета
-    // Стандарт (Включение, Сервис): 1 -> 2 -> 3 -> 4
-    // Переезд: 1 -> 2 -> 4 (Шаг 3 пропускается)
-    // Демонтаж: 1 -> 3 -> 4 (Шаг 2 пропускается)
     function getNextStepNum(current) {
         if (isDemontazh()) {
             if (current === 1) return 3;
@@ -1462,6 +1584,11 @@
                 alert("Пожалуйста, выберите монтажника!");
                 return;
             }
+            const themeVal = document.getElementById('completionTheme').value;
+            if (!themeVal) {
+                alert("Пожалуйста, укажите или выберите тематику завершения!");
+                return;
+            }
         }
 
         isSubmitting = true;
@@ -1534,18 +1661,16 @@
                 }
 
                 params.append("valAI", document.getElementById('comment').value);
-                params.append("valAG", "Монтажник: " + document.getElementById('installerName').value);
+                // Если в скрипт передается тематика, её можно передать, например, в valAH или куда требуется (тут сохранена базовая структура отправки)
+                params.append("valAG", "Монтажник: " + document.getElementById('installerName').value + " | Тематика: " + document.getElementById('completionTheme').value);
             }
 
-            // Отправка запроса через Image Beacon (обход CORS-ограничений Google Apps Script)
             const targetUrl = `${SCRIPT_URL}?${params.toString()}`;
             
             await new Promise((resolve) => {
                 const img = new Image();
-                img.onload = img.onerror = () => resolve(); // Скрипт на бэкенде выполнится в любом случае
+                img.onload = img.onerror = () => resolve(); 
                 img.src = targetUrl;
-                
-                // Защитный таймер на случай медленной сети
                 setTimeout(resolve, 2000);
             });
 
@@ -1560,7 +1685,7 @@
             alert("❌ Ошибка при отправке отчета: " + error.message);
         } finally {
             isSubmitting = false;
-            submitBtn.textContent = originalTest;
+            submitBtn.textContent = originalText;
             submitBtn.disabled = false;
         }
     }
