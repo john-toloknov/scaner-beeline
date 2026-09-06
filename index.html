@@ -1017,7 +1017,7 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0IL1Of9UURRQLro5hHkkiMe237yjlNpxM1LLFs3Aef4ucWSQ39Sayebe1bslftM0Bfg/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxINc6eOKp6cNkGxpPMj58WCSJSD6CpPxaSUo59Z2woVx4sMXK8UfDjLqOKuh-G07JBaw/exec";
 
     const tg = window.Telegram.WebApp;
     tg.ready();
@@ -1537,9 +1537,16 @@
                 params.append("valAG", "Монтажник: " + document.getElementById('installerName').value);
             }
 
-            await fetch(`${SCRIPT_URL}?${params.toString()}`, {
-                method: "GET",
-                mode: "no-cors"
+            // Отправка запроса через Image Beacon (обход CORS-ограничений Google Apps Script)
+            const targetUrl = `${SCRIPT_URL}?${params.toString()}`;
+            
+            await new Promise((resolve) => {
+                const img = new Image();
+                img.onload = img.onerror = () => resolve(); // Скрипт на бэкенде выполнится в любом случае
+                img.src = targetUrl;
+                
+                // Защитный таймер на случай медленной сети
+                setTimeout(resolve, 2000);
             });
 
             alert("✅ Отчет успешно отправлен в Google Таблицу!");
@@ -1553,7 +1560,7 @@
             alert("❌ Ошибка при отправке отчета: " + error.message);
         } finally {
             isSubmitting = false;
-            submitBtn.textContent = originalText;
+            submitBtn.textContent = originalTest;
             submitBtn.disabled = false;
         }
     }
