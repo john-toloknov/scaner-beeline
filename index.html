@@ -737,28 +737,42 @@
                     </div>
 
 <script>
-    // Универсальная функция автоопределения модели роутера
-    function autoDetectRouterModel(sn, modelInputId) {
-        if (!sn) return;
-        sn = sn.trim().toUpperCase();
+    // Универсальная функция автоопределения модели роутера (адаптирована из Google Apps Script)
+    function autoDetectRouterModel(serial, modelInputId) {
+        if (!serial) return;
+        const s = serial.trim();
         let detectedModel = "";
 
-        // Правила префиксов (можете настроить под свои серийники)
-        if (sn.startsWith("EX222") || sn.startsWith("TPL")) {
-            detectedModel = "TP-Link EX222 (AX-1800)";
-        } else if (sn.startsWith("H3601") || sn.startsWith("ZTE")) {
-            detectedModel = "ZXHN H3601P V7 (ZTE Router)";
-        } else if (sn.startsWith("EC225")) {
-            detectedModel = "TP Link EC225-G5 (AC-1300)";
-        } else if (sn.startsWith("C20")) {
-            detectedModel = "TP-Link Archer C20";
-        } else if (sn.startsWith("C24")) {
+        // Проверка префиксов и вхождений из вашей базы
+        if (s.indexOf("318") === 0 || s.indexOf("317") === 0 || s.indexOf("218") === 0 || s.indexOf("216") === 0) {
+            detectedModel = "Маршрутизатор беспроводной 840 TP-Link";
+        } else if (s.indexOf("2312T2DM") === 0 || s.indexOf("2309T2DM") === 0) {
+            detectedModel = "AX3000 (Ultimate Black)";
+        } else if (s.indexOf("22161K") === 0) {
+            detectedModel = "TP-Link DEKO M4 (Ultimate)";
+        } else if (s.indexOf("220B") === 0) {
             detectedModel = "TP-Link Archer C24";
-        } else if (sn.startsWith("X3000") || sn.startsWith("GPON")) {
-            detectedModel = "DGP X3000TR (GPON)";
+        } else if (s.indexOf("2184545") === 0 || s.indexOf("2212252") === 0 || s.indexOf("2211846") === 0 || s.indexOf("2211477") === 0 || s.indexOf("2211225") === 0) {
+            detectedModel = "TP-Link Archer C20";
+        } else if (s.includes("BRDM")) {
+            detectedModel = "TURBO";
+        } else if (s.includes("DDM")) {
+            detectedModel = "AC1200 - G12-B";
+        } else if (s.indexOf("ZTEPHAG") === 0) {
+            detectedModel = "ZXHN H3601P V7 (ZTE Router)";
+        } else if (s.indexOf("223B0A3") === 0) {
+            detectedModel = "TP-Link HC220-G5 (Ultimate White)";
+        } else if (s.indexOf("QXH") === 0) {
+            detectedModel = "D-Link Dir 615";
+        } else if (s.indexOf("225507Y") === 0 || s.indexOf("2258085") === 0 || s.indexOf("226110C") === 0 || s.indexOf("22550HS") === 0 || s.indexOf("225500S") === 0 || s.indexOf("22570CR") === 0 || s.indexOf("2256443") === 0) {
+            detectedModel = "TP-Link EX222 (AX-1800)";
+        } else if (s.indexOf("22482P1") === 0 || s.indexOf("224C3S8") === 0 || s.indexOf("22494J9") === 0 || s.indexOf("22473N7") === 0 || s.indexOf("22473N8") === 0 || s.indexOf("22524R3") === 0 || s.indexOf("22461W9") === 0 || s.indexOf("22454W2") === 0 || s.indexOf("2245291") === 0 || s.indexOf("224A0W2") === 0 || s.indexOf("224B5Q4") === 0 || s.indexOf("224C3SB") === 0 || s.indexOf("224BQ40") === 0 || s.indexOf("2244774") === 0 || s.indexOf("224B2K4") === 0) {
+            detectedModel = "TP Link EC225-G5 (AC-1300)";
+        } else if (s.includes("FRDM") || s.includes("EBDM") || s.includes("FNDM")) {
+            detectedModel = "Basic (Модель F1O-D)";
         }
 
-        // Если модель найдена, обновляем скрытый инпут и текст кнопки кастомного селекта
+        // Если модель успешно определилась — обновляем интерфейс
         if (detectedModel) {
             let btnId = modelInputId + '-btn';
             let listId = modelInputId + '-list';
@@ -770,7 +784,7 @@
                 document.getElementById(btnId).innerText = detectedModel;
             }
             
-            // Тактильный отклик Telegram WebApp (если доступен)
+            // Вибрация в Telegram при успешном распознавании
             if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
                 window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
             }
