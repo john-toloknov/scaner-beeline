@@ -659,7 +659,7 @@
                 <button type="button" class="btn main-btn" onclick="nextStep(2)">Далее ➡️</button>
             </div>
 
-            <!-- ШАГ 3: ОБОРУДОВАНИЕ -->
+          <!-- ШАГ 3: ОБОРУДОВАНИЕ -->
             <div class="step" id="step-equipment">
                 <div class="card">
                     <h3>Оборудование</h3>
@@ -677,7 +677,7 @@
 
                             <label>Серийный номер роутера 1</label>
                             <div class="input-group">
-                                <input type="text" id="r1Sn">
+                                <input type="text" id="r1Sn" oninput="autoDetectRouterModel(this.value, 'r1Model')">
                                 <button type="button" class="btn-scan" onclick="openScanner('r1Sn')">📷 Сканировать</button>
                             </div>
                             <label>MAC адрес роутера 1</label>
@@ -701,7 +701,7 @@
 
                             <label>Серийный номер роутера 2</label>
                             <div class="input-group">
-                                <input type="text" id="r2Sn">
+                                <input type="text" id="r2Sn" oninput="autoDetectRouterModel(this.value, 'r2Model')">
                                 <button type="button" class="btn-scan" onclick="openScanner('r2Sn')">📷 Сканировать</button>
                             </div>
                             <label>MAC адрес роутера 2</label>
@@ -725,7 +725,7 @@
 
                             <label>Серийный номер роутера 3</label>
                             <div class="input-group">
-                                <input type="text" id="r3Sn">
+                                <input type="text" id="r3Sn" oninput="autoDetectRouterModel(this.value, 'r3Model')">
                                 <button type="button" class="btn-scan" onclick="openScanner('r3Sn')">📷 Сканировать</button>
                             </div>
                             <label>MAC адрес роутера 3</label>
@@ -735,6 +735,48 @@
                             </div>
                         </div>
                     </div>
+
+<script>
+    // Универсальная функция автоопределения модели роутера
+    function autoDetectRouterModel(sn, modelInputId) {
+        if (!sn) return;
+        sn = sn.trim().toUpperCase();
+        let detectedModel = "";
+
+        // Правила префиксов (можете настроить под свои серийники)
+        if (sn.startsWith("EX222") || sn.startsWith("TPL")) {
+            detectedModel = "TP-Link EX222 (AX-1800)";
+        } else if (sn.startsWith("H3601") || sn.startsWith("ZTE")) {
+            detectedModel = "ZXHN H3601P V7 (ZTE Router)";
+        } else if (sn.startsWith("EC225")) {
+            detectedModel = "TP Link EC225-G5 (AC-1300)";
+        } else if (sn.startsWith("C20")) {
+            detectedModel = "TP-Link Archer C20";
+        } else if (sn.startsWith("C24")) {
+            detectedModel = "TP-Link Archer C24";
+        } else if (sn.startsWith("X3000") || sn.startsWith("GPON")) {
+            detectedModel = "DGP X3000TR (GPON)";
+        }
+
+        // Если модель найдена, обновляем скрытый инпут и текст кнопки кастомного селекта
+        if (detectedModel) {
+            let btnId = modelInputId + '-btn';
+            let listId = modelInputId + '-list';
+            
+            if (typeof selectOption === 'function') {
+                selectOption(modelInputId, detectedModel, btnId, detectedModel, listId);
+            } else {
+                document.getElementById(modelInputId).value = detectedModel;
+                document.getElementById(btnId).innerText = detectedModel;
+            }
+            
+            // Тактильный отклик Telegram WebApp (если доступен)
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+                window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+            }
+        }
+    }
+</script>
 
                     <!-- Приставка 1 -->
                     <div class="accordion-item">
