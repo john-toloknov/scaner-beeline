@@ -659,7 +659,7 @@
                 <button type="button" class="btn main-btn" onclick="nextStep(2)">Далее ➡️</button>
             </div>
 
-          <!-- ШАГ 3: ОБОРУДОВАНИЕ -->
+            <!-- ШАГ 3: ОБОРУДОВАНИЕ -->
             <div class="step" id="step-equipment">
                 <div class="card">
                     <h3>Оборудование</h3>
@@ -735,65 +735,6 @@
                             </div>
                         </div>
                     </div>
-
-<script>
-    // Универсальная функция автоопределения модели роутера (с приоритетом)
-    function autoDetectRouterModel(serial, modelInputId) {
-        if (!serial) return;
-        const s = serial.trim();
-        let detectedModel = "";
-
-        // ПРИОРИТЕТ 1: Ставим проверку QXH (DIR-615) в самый верх, 
-        // чтобы она проверялась первой и её ничто не перебило
-        if (s.indexOf("QXH") === 0) {
-            detectedModel = "D-Link Dir 615"; // Убедитесь, что название точь-в-точь как в вашем списке выбора
-        } 
-        // Остальные правила
-        else if (s.indexOf("318") === 0 || s.indexOf("317") === 0 || s.indexOf("218") === 0 || s.indexOf("216") === 0) {
-            detectedModel = "Маршрутизатор беспроводной 840 TP-Link";
-        } else if (s.indexOf("2312T2DM") === 0 || s.indexOf("2309T2DM") === 0) {
-            detectedModel = "AX3000 (Ultimate Black)";
-        } else if (s.indexOf("22161K") === 0) {
-            detectedModel = "TP-Link DEKO M4 (Ultimate)";
-        } else if (s.indexOf("220B") === 0) {
-            detectedModel = "TP-Link Archer C24";
-        } else if (s.indexOf("2184545") === 0 || s.indexOf("2212252") === 0 || s.indexOf("2211846") === 0 || s.indexOf("2211477") === 0 || s.indexOf("2211225") === 0) {
-            detectedModel = "TP-Link Archer C20";
-        } else if (s.includes("BRDM")) {
-            detectedModel = "TURBO";
-        } else if (s.includes("DDM")) {
-            detectedModel = "AC1200 - G12-B";
-        } else if (s.indexOf("ZTEPHAG") === 0) {
-            detectedModel = "ZXHN H3601P V7 (ZTE Router)";
-        } else if (s.indexOf("223B0A3") === 0) {
-            detectedModel = "TP-Link HC220-G5 (Ultimate White)";
-        } else if (s.indexOf("225507Y") === 0 || s.indexOf("2258085") === 0 || s.indexOf("226110C") === 0 || s.indexOf("22550HS") === 0 || s.indexOf("225500S") === 0 || s.indexOf("22570CR") === 0 || s.indexOf("2256443") === 0) {
-            detectedModel = "TP-Link EX222 (AX-1800)";
-        } else if (s.indexOf("22482P1") === 0 || s.indexOf("224C3S8") === 0 || s.indexOf("22494J9") === 0 || s.indexOf("22473N7") === 0 || s.indexOf("22473N8") === 0 || s.indexOf("22524R3") === 0 || s.indexOf("22461W9") === 0 || s.indexOf("22454W2") === 0 || s.indexOf("2245291") === 0 || s.indexOf("224A0W2") === 0 || s.indexOf("224B5Q4") === 0 || s.indexOf("224C3SB") === 0 || s.indexOf("224BQ40") === 0 || s.indexOf("2244774") === 0 || s.indexOf("224B2K4") === 0) {
-            detectedModel = "TP Link EC225-G5 (AC-1300)";
-        } else if (s.includes("FRDM") || s.includes("EBDM") || s.includes("FNDM")) {
-            detectedModel = "Basic (Модель F1O-D)";
-        }
-
-        // Если модель успешно определилась — обновляем интерфейс
-        if (detectedModel) {
-            let btnId = modelInputId + '-btn';
-            let listId = modelInputId + '-list';
-            
-            if (typeof selectOption === 'function') {
-                selectOption(modelInputId, detectedModel, btnId, detectedModel, listId);
-            } else {
-                document.getElementById(modelInputId).value = detectedModel;
-                document.getElementById(btnId).innerText = detectedModel;
-            }
-            
-            // Вибрация в Telegram при успешном распознавании
-            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
-                window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-            }
-        }
-    }
-</script>
                     
                     <!-- Приставка 1 -->
                     <div class="accordion-item">
@@ -1149,7 +1090,6 @@
         "Без приставки"
     ];
 
-    // ПУЛЫ ТЕМАТИК ПО ТИПАМ ОТЧЕТОВ
     const themesService = [
         "Замена коннектора на ТКД", "Перенос выезда по запросу клиента", "Выход из строя коммутатора ТКД",
         "Настройка Wi-Fi роутера Basic", "STB предоставлена", "Замена порта на КРТ",
@@ -1232,7 +1172,6 @@
             html = `<div class="dropdown-item" style="color: var(--text-secondary); cursor: default;">Ничего не найдено</div>`;
         } else {
             filtered.forEach(theme => {
-                // Экранируем кавычки для безопасности в JS-строке
                 const safeTheme = theme.replace(/'/g, "\\'");
                 html += `<div class="dropdown-item" onclick="selectTheme('${safeTheme}')">${theme}</div>`;
             });
@@ -1251,7 +1190,6 @@
 
     function filterThemes() {
         const query = document.getElementById('themeSearchInput').value;
-        // Если пользователь начал писать, сбрасываем скрытое значение, пока не выберет конкретное
         document.getElementById('completionTheme').value = query;
         document.getElementById('completionTheme-list').classList.add('open');
         renderThemesList(query);
@@ -1351,7 +1289,6 @@
         initEquipmentDropdowns();
         initInstallersDropdowns();
         handleReportTypeChange();
-        // Установим дефолтное значение первой тематики для текущего отчета
         const defaultThemes = getActiveThemesList();
         if (defaultThemes.length > 0) {
             document.getElementById('themeSearchInput').value = defaultThemes[0];
@@ -1434,7 +1371,6 @@
             gponOnlyBlock.style.display = 'none';
         }
 
-        // Обновляем список тематик при смене типа отчета и подставляем первый вариант по умолчанию
         const currentThemes = getActiveThemesList();
         if (currentThemes.length > 0) {
             document.getElementById('themeSearchInput').value = currentThemes[0];
@@ -1530,12 +1466,10 @@
             (decodedText) => {
                 if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
                 
-                // Записываем отсканированный текст в инпут
                 let inputElement = document.getElementById(activeInputId);
                 if (inputElement) {
                     inputElement.value = decodedText;
                     
-                    // ПРИНУДИТЕЛЬНО запускаем автоопределение для нужного роутера
                     if (activeInputId === 'r1Sn') {
                         autoDetectRouterModel(decodedText, 'r1Model');
                     } else if (activeInputId === 'r2Sn') {
@@ -1548,7 +1482,10 @@
                 closeScanner();
             },
             (errorMessage) => {}
-        )
+        ).catch(err => {
+            console.error("Ошибка запуска сканера:", err);
+        });
+    }
 
     function closeScanner() {
         if (html5QrCode && html5QrCode.isScanning) {
@@ -1559,6 +1496,56 @@
             });
         } else {
             document.getElementById('scanner-modal').style.display = 'none';
+        }
+    }
+
+    function autoDetectRouterModel(serial, modelInputId) {
+        if (!serial) return;
+        const s = serial.trim();
+        let detectedModel = "";
+
+        if (s.indexOf("QXH") === 0) {
+            detectedModel = "D-Link Dir 615";
+        } else if (s.indexOf("318") === 0 || s.indexOf("317") === 0 || s.indexOf("218") === 0 || s.indexOf("216") === 0) {
+            detectedModel = "Маршрутизатор беспроводной 840 TP-Link";
+        } else if (s.indexOf("2312T2DM") === 0 || s.indexOf("2309T2DM") === 0) {
+            detectedModel = "AX3000 (Ultimate Black)";
+        } else if (s.indexOf("22161K") === 0) {
+            detectedModel = "TP-Link DEKO M4 (Ultimate)";
+        } else if (s.indexOf("220B") === 0) {
+            detectedModel = "TP-Link Archer C24";
+        } else if (s.indexOf("2184545") === 0 || s.indexOf("2212252") === 0 || s.indexOf("2211846") === 0 || s.indexOf("2211477") === 0 || s.indexOf("2211225") === 0) {
+            detectedModel = "TP-Link Archer C20";
+        } else if (s.includes("BRDM")) {
+            detectedModel = "TURBO";
+        } else if (s.includes("DDM")) {
+            detectedModel = "AC1200 - G12-B";
+        } else if (s.indexOf("ZTEPHAG") === 0) {
+            detectedModel = "ZXHN H3601P V7 (ZTE Router)";
+        } else if (s.indexOf("223B0A3") === 0) {
+            detectedModel = "TP-Link HC220-G5 (Ultimate White)";
+        } else if (s.indexOf("225507Y") === 0 || s.indexOf("2258085") === 0 || s.indexOf("226110C") === 0 || s.indexOf("22550HS") === 0 || s.indexOf("225500S") === 0 || s.indexOf("22570CR") === 0 || s.indexOf("2256443") === 0) {
+            detectedModel = "TP-Link EX222 (AX-1800)";
+        } else if (s.indexOf("22482P1") === 0 || s.indexOf("224C3S8") === 0 || s.indexOf("22494J9") === 0 || s.indexOf("22473N7") === 0 || s.indexOf("22473N8") === 0 || s.indexOf("22524R3") === 0 || s.indexOf("22461W9") === 0 || s.indexOf("22454W2") === 0 || s.indexOf("2245291") === 0 || s.indexOf("224A0W2") === 0 || s.indexOf("224B5Q4") === 0 || s.indexOf("224C3SB") === 0 || s.indexOf("224BQ40") === 0 || s.indexOf("2244774") === 0 || s.indexOf("224B2K4") === 0) {
+            detectedModel = "TP Link EC225-G5 (AC-1300)";
+        } else if (s.includes("FRDM") || s.includes("EBDM") || s.includes("FNDM")) {
+            detectedModel = "Basic (Модель F1O-D)";
+        }
+
+        if (detectedModel) {
+            let btnId = modelInputId + '-btn';
+            let listId = modelInputId + '-list';
+            
+            if (typeof selectOption === 'function') {
+                selectOption(modelInputId, detectedModel, btnId, detectedModel, listId);
+            } else {
+                document.getElementById(modelInputId).value = detectedModel;
+                document.getElementById(btnId).innerText = detectedModel;
+            }
+            
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+                window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+            }
         }
     }
 
@@ -1731,7 +1718,6 @@
                 }
 
                 params.append("valAI", document.getElementById('comment').value);
-                // Если в скрипт передается тематика, её можно передать, например, в valAH или куда требуется (тут сохранена базовая структура отправки)
                 params.append("valAG", "Монтажник: " + document.getElementById('installerName').value + " | Тематика: " + document.getElementById('completionTheme').value);
             }
 
