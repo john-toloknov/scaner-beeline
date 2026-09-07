@@ -749,7 +749,7 @@
 
                             <label>Серийный номер приставки 1</label>
                             <div class="input-group">
-                                <input type="text" id="tv1Sn">
+                                <input type="text" id="tv1Sn" oninput="autoDetectTvModel(this.value, 'tv1Model')">
                                 <button type="button" class="btn-scan" onclick="openScanner('tv1Sn')">📷 Сканировать</button>
                             </div>
                             <label>MAC адрес приставки 1</label>
@@ -773,7 +773,7 @@
 
                             <label>Серийный номер приставки 2</label>
                             <div class="input-group">
-                                <input type="text" id="tv2Sn">
+                                <input type="text" id="tv2Sn" oninput="autoDetectTvModel(this.value, 'tv2Model')">
                                 <button type="button" class="btn-scan" onclick="openScanner('tv2Sn')">📷 Сканировать</button>
                             </div>
                             <label>MAC адрес приставки 2</label>
@@ -797,7 +797,7 @@
 
                             <label>Серийный номер приставки 3</label>
                             <div class="input-group">
-                                <input type="text" id="tv3Sn">
+                                <input type="text" id="tv3Sn" oninput="autoDetectTvModel(this.value, 'tv3Model')">
                                 <button type="button" class="btn-scan" onclick="openScanner('tv3Sn')">📷 Сканировать</button>
                             </div>
                             <label>MAC адрес приставки 3</label>
@@ -1081,6 +1081,7 @@
 
     const standardTvBoxes = [
         "Приставка IPTV ZXV10 B860H",
+        "RASSE-001",
         "Без приставки"
     ];
 
@@ -1476,6 +1477,12 @@
                         autoDetectRouterModel(decodedText, 'r2Model');
                     } else if (activeInputId === 'r3Sn') {
                         autoDetectRouterModel(decodedText, 'r3Model');
+                    } else if (activeInputId === 'tv1Sn') {
+                        autoDetectTvModel(decodedText, 'tv1Model');
+                    } else if (activeInputId === 'tv2Sn') {
+                        autoDetectTvModel(decodedText, 'tv2Model');
+                    } else if (activeInputId === 'tv3Sn') {
+                        autoDetectTvModel(decodedText, 'tv3Model');
                     }
                 }
                 
@@ -1530,6 +1537,34 @@
             detectedModel = "TP Link EC225-G5 (AC-1300)";
         } else if (s.includes("FRDM") || s.includes("EBDM") || s.includes("FNDM")) {
             detectedModel = "Basic (Модель F1O-D)";
+        }
+
+        if (detectedModel) {
+            let btnId = modelInputId + '-btn';
+            let listId = modelInputId + '-list';
+            
+            if (typeof selectOption === 'function') {
+                selectOption(modelInputId, detectedModel, btnId, detectedModel, listId);
+            } else {
+                document.getElementById(modelInputId).value = detectedModel;
+                document.getElementById(btnId).innerText = detectedModel;
+            }
+            
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+                window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+            }
+        }
+    }
+
+    function autoDetectTvModel(serial, modelInputId) {
+        if (!serial) return;
+        const s = serial.trim();
+        let detectedModel = "";
+
+        if (s.indexOf("VMPZ") === 0) {
+            detectedModel = "Приставка IPTV ZXV10 B860H";
+        } else if (s.indexOf("VMPLC") === 0) {
+            detectedModel = "RASSE-001";
         }
 
         if (detectedModel) {
