@@ -737,14 +737,19 @@
                     </div>
 
 <script>
-    // Универсальная функция автоопределения модели роутера (адаптирована из Google Apps Script)
+    // Универсальная функция автоопределения модели роутера (с приоритетом)
     function autoDetectRouterModel(serial, modelInputId) {
         if (!serial) return;
         const s = serial.trim();
         let detectedModel = "";
 
-        // Проверка префиксов и вхождений из вашей базы
-        if (s.indexOf("318") === 0 || s.indexOf("317") === 0 || s.indexOf("218") === 0 || s.indexOf("216") === 0) {
+        // ПРИОРИТЕТ 1: Ставим проверку QXH (DIR-615) в самый верх, 
+        // чтобы она проверялась первой и её ничто не перебило
+        if (s.indexOf("QXH") === 0) {
+            detectedModel = "D-Link Dir 615"; // Убедитесь, что название точь-в-точь как в вашем списке выбора
+        } 
+        // Остальные правила
+        else if (s.indexOf("318") === 0 || s.indexOf("317") === 0 || s.indexOf("218") === 0 || s.indexOf("216") === 0) {
             detectedModel = "Маршрутизатор беспроводной 840 TP-Link";
         } else if (s.indexOf("2312T2DM") === 0 || s.indexOf("2309T2DM") === 0) {
             detectedModel = "AX3000 (Ultimate Black)";
@@ -762,8 +767,6 @@
             detectedModel = "ZXHN H3601P V7 (ZTE Router)";
         } else if (s.indexOf("223B0A3") === 0) {
             detectedModel = "TP-Link HC220-G5 (Ultimate White)";
-        } else if (s.indexOf("QXH") === 0) {
-            detectedModel = "D-Link Dir 615";
         } else if (s.indexOf("225507Y") === 0 || s.indexOf("2258085") === 0 || s.indexOf("226110C") === 0 || s.indexOf("22550HS") === 0 || s.indexOf("225500S") === 0 || s.indexOf("22570CR") === 0 || s.indexOf("2256443") === 0) {
             detectedModel = "TP-Link EX222 (AX-1800)";
         } else if (s.indexOf("22482P1") === 0 || s.indexOf("224C3S8") === 0 || s.indexOf("22494J9") === 0 || s.indexOf("22473N7") === 0 || s.indexOf("22473N8") === 0 || s.indexOf("22524R3") === 0 || s.indexOf("22461W9") === 0 || s.indexOf("22454W2") === 0 || s.indexOf("2245291") === 0 || s.indexOf("224A0W2") === 0 || s.indexOf("224B5Q4") === 0 || s.indexOf("224C3SB") === 0 || s.indexOf("224BQ40") === 0 || s.indexOf("2244774") === 0 || s.indexOf("224B2K4") === 0) {
