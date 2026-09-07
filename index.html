@@ -604,11 +604,11 @@
                                 <input type="number" id="ftthTail" placeholder="Штук">
                             </div>
                             <div class="field-container">
-                                <label>Дюбель гвозди 6*40</label>
+                                <label>Дюбель 6*40</label>
                                 <input type="number" id="dowels" placeholder="Штук">
                             </div>
                             <div class="field-container">
-                                <label>Кабельная клипса FTTH</label>
+                                <label>Клипса FTTH</label>
                                 <input type="number" id="ftthClip" placeholder="Штук">
                             </div>
                         </div>
@@ -623,7 +623,7 @@
 
                         <div class="materials-grid-2" style="margin-top: 8px;">
                             <div class="field-container">
-                                <label>Оптические патч-корд</label>
+                                <label>Оптический патч-корд</label>
                                 <input type="number" step="0.1" id="optPatchMeters" placeholder="Метров">
                             </div>
                             <div class="field-container">
@@ -634,18 +634,18 @@
 
                         <div class="materials-grid-2" style="margin-top: 8px;">
                             <div class="field-container">
-                                <label>Коннектор SOC SC/APC 3.0mm</label>
+                                <label>SOC SC/APC 3.0mm</label>
                                 <input type="number" id="socConnector" placeholder="Штук">
                             </div>
                             <div class="field-container">
-                                <label>Fast-коннектор FTTH-SC/APC</label>
+                                <label>Fast-коннектор </label>
                                 <input type="number" id="fastConnector" placeholder="Штук">
                             </div>
                         </div>
 
                         <div class="materials-grid-2" style="margin-top: 8px;">
                             <div class="field-container">
-                                <label>Оптическая гильза КДЗС 60мм</label>
+                                <label>Оптическая гильза</label>
                                 <input type="number" id="kdzs" placeholder="Штук">
                             </div>
                             <div class="field-container">
@@ -794,7 +794,7 @@
         }
     }
 </script>
-
+                    
                     <!-- Приставка 1 -->
                     <div class="accordion-item">
                         <button type="button" class="accordion-header" onclick="toggleAccordion(this)">Приставка 1</button>
@@ -1529,15 +1529,26 @@
             { fps: 20, qrbox: { width: 260, height: 130 } },
             (decodedText) => {
                 if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-                document.getElementById(activeInputId).value = decodedText;
+                
+                // Записываем отсканированный текст в инпут
+                let inputElement = document.getElementById(activeInputId);
+                if (inputElement) {
+                    inputElement.value = decodedText;
+                    
+                    // ПРИНУДИТЕЛЬНО запускаем автоопределение для нужного роутера
+                    if (activeInputId === 'r1Sn') {
+                        autoDetectRouterModel(decodedText, 'r1Model');
+                    } else if (activeInputId === 'r2Sn') {
+                        autoDetectRouterModel(decodedText, 'r2Model');
+                    } else if (activeInputId === 'r3Sn') {
+                        autoDetectRouterModel(decodedText, 'r3Model');
+                    }
+                }
+                
                 closeScanner();
             },
             (errorMessage) => {}
-        ).catch(err => {
-            alert("Не удалось запустить камеру: проверьте разрешения.");
-            closeScanner();
-        });
-    }
+        )
 
     function closeScanner() {
         if (html5QrCode && html5QrCode.isScanning) {
