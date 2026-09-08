@@ -1690,79 +1690,79 @@
         submitBtn.disabled = true;
 
         try {
-            const params = new URLSearchParams();
-            params.append("type", type);
-            params.append("date", reportDate);
+            let reportData = {};
 
             if (type.includes("ППР")) {
-                params.append("valA", document.getElementById('pprLogin').value || document.getElementById('pprAddress').value);
-                params.append("valB", document.getElementById('pprAddress').value);
-                params.append("valC", "Подъезд: " + document.getElementById('pprEntrance').value);
-                params.append("valD", "Место: " + document.getElementById('pprPlace').value);
-                params.append("valF", document.getElementById('pprCableNum').value);
-                params.append("valG", document.getElementById('pprCableQty').value);
-                params.append("valH", document.getElementById('pprComment').value);
-                params.append("valJ", document.getElementById('pprClipsQty').value);
-                params.append("valK", document.getElementById('pprConnectorsQty').value);
-                params.append("valL", document.getElementById('pprClampsQty').value);
-                params.append("valM", document.getElementById('pprTapeQty').value);
-                params.append("valO", "Вид работ: " + document.getElementById('pprWorkType').value);
-                
-                let installersStr = "Монтажники: " + document.getElementById('pprInstaller1').value;
-                if (document.getElementById('pprInstaller2').value) {
-                    installersStr += ", " + document.getElementById('pprInstaller2').value;
-                }
-                params.append("valAG", installersStr);
-
+                reportData = {
+                    type: type,
+                    date: reportDate,
+                    valA: document.getElementById('pprLogin').value || document.getElementById('pprAddress').value,
+                    valB: document.getElementById('pprAddress').value,
+                    valC: "Подъезд: " + document.getElementById('pprEntrance').value,
+                    valD: "Место: " + document.getElementById('pprPlace').value,
+                    valF: document.getElementById('pprCableNum').value,
+                    valG: document.getElementById('pprCableQty').value,
+                    valH: document.getElementById('pprComment').value,
+                    valJ: document.getElementById('pprClipsQty').value,
+                    valK: document.getElementById('pprConnectorsQty').value,
+                    valL: document.getElementById('pprClampsQty').value,
+                    valM: document.getElementById('pprTapeQty').value,
+                    valO: "Вид работ: " + document.getElementById('pprWorkType').value,
+                    valAG: "Монтажники: " + document.getElementById('pprInstaller1').value + (document.getElementById('pprInstaller2').value ? ", " + document.getElementById('pprInstaller2').value : "")
+                };
             } else {
-                params.append("valA", document.getElementById('appNumber').value);
-                params.append("valB", document.getElementById('address').value);
-                params.append("valC", document.getElementById('clientName').value);
-                params.append("valD", document.getElementById('login').value);
+                reportData = {
+                    type: type,
+                    date: reportDate,
+                    valA: document.getElementById('appNumber').value,
+                    valB: document.getElementById('address').value,
+                    valC: document.getElementById('clientName').value,
+                    valD: document.getElementById('login').value,
+                    valAI: document.getElementById('comment').value,
+                    valAG: "Монтажник: " + document.getElementById('installerName').value + " | Тематика: " + document.getElementById('completionTheme').value
+                };
                 
                 if (!isDemontazh()) {
-                    params.append("valF", document.getElementById('cableNum').value);
-                    params.append("valG", document.getElementById('cableQty').value);
-                    params.append("valH", document.getElementById('patchCableNum').value);
-                    params.append("valI", document.getElementById('patchCableQty').value);
-                    params.append("valJ", document.getElementById('clipsQty').value);
-                    params.append("valK", document.getElementById('connectorsQty').value);
-                    params.append("valL", document.getElementById('clampsQty').value);
-                    params.append("valM", document.getElementById('tapeQty').value);
-                    params.append("valN", document.getElementById('uy2Qty').value);
-                    params.append("valO", document.getElementById('pullMethod').value);
+                    reportData.valF = document.getElementById('cableNum').value;
+                    reportData.valG = document.getElementById('cableQty').value;
+                    reportData.valH = document.getElementById('patchCableNum').value;
+                    reportData.valI = document.getElementById('patchCableQty').value;
+                    reportData.valJ = document.getElementById('clipsQty').value;
+                    reportData.valK = document.getElementById('connectorsQty').value;
+                    reportData.valL = document.getElementById('clampsQty').value;
+                    reportData.valM = document.getElementById('tapeQty').value;
+                    reportData.valN = document.getElementById('uy2Qty').value;
+                    reportData.valO = document.getElementById('pullMethod').value;
                 }
 
                 if (!isПереезд()) {
-                    params.append("valQ", document.getElementById('r1Model').value);
-                    params.append("valR", document.getElementById('r1Sn').value);
-                    params.append("valS", document.getElementById('r1Mac').value);
-                    params.append("valT", document.getElementById('r2Model').value);
-                    params.append("valU", document.getElementById('r2Sn').value);
-                    params.append("valV", document.getElementById('r2Mac').value);
-                    params.append("valW", document.getElementById('r3Model').value);
-                    params.append("valX", document.getElementById('r3Sn').value);
-                    params.append("valY", document.getElementById('r3Mac').value);
+                    reportData.valQ = document.getElementById('r1Model').value;
+                    reportData.valR = document.getElementById('r1Sn').value;
+                    reportData.valS = document.getElementById('r1Mac').value;
+                    reportData.valT = document.getElementById('r2Model').value;
+                    reportData.valU = document.getElementById('r2Sn').value;
+                    reportData.valV = document.getElementById('r2Mac').value;
+                    reportData.valW = document.getElementById('r3Model').value;
+                    reportData.valX = document.getElementById('r3Sn').value;
+                    reportData.valY = document.getElementById('r3Mac').value;
 
-                    params.append("valZ", document.getElementById('tv1Model').value);
-                    params.append("valAA", document.getElementById('tv1Sn').value);
-                    params.append("valAB", document.getElementById('tv1Mac').value);
-                    params.append("valAC", document.getElementById('tv2Model').value);
-                    params.append("valAD", document.getElementById('tv2Sn').value);
-                    params.append("valAE", document.getElementById('tv2Mac').value);
+                    reportData.valZ = document.getElementById('tv1Model').value;
+                    reportData.valAA = document.getElementById('tv1Sn').value;
+                    reportData.valAB = document.getElementById('tv1Mac').value;
+                    reportData.valAC = document.getElementById('tv2Model').value;
+                    reportData.valAD = document.getElementById('tv2Sn').value;
+                    reportData.valAE = document.getElementById('tv2Mac').value;
                 }
-
-                params.append("valAI", document.getElementById('comment').value);
-                params.append("valAG", "Монтажник: " + document.getElementById('installerName').value + " | Тематика: " + document.getElementById('completionTheme').value);
             }
 
-            const targetUrl = `${SCRIPT_URL}?${params.toString()}`;
-            
-            await new Promise((resolve) => {
-                const img = new Image();
-                img.onload = img.onerror = () => resolve(); 
-                img.src = targetUrl;
-                setTimeout(resolve, 2000);
+            // Отправка данных методом POST через fetch с JSON-телом
+            await fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8'
+                },
+                body: JSON.stringify(reportData)
             });
 
             alert("✅ Отчет успешно отправлен в Google Таблицу!");
